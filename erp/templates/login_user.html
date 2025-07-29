@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="col-md-6 offset-md-3">
+<h1>სისტემაში შესვლა</h1>
+<br/>
+
+<form method="POST" action="{% url 'login_user' %}">
+	{% csrf_token %}
+
+  <div class="mb-3">
+    <input type="text" class="form-control" name="username" placeholder="სახელი" required>
+
+  </div>
+    <br/>
+  <div class="mb-3">
+    <input type="password" class="form-control" name="password" placeholder="პაროლი" required>
+  </div>
+    <br/>
+
+{#  <div class="mb-3">#}
+{#    <input type="text" class="form-control" name="db_server" placeholder="127.0.0.1">#}
+{#  </div>#}
+{#    <br/>#}
+{##}
+{#  <div class="mb-3">#}
+{#    <input type="text" class="form-control" name="db_name" placeholder="db_name">#}
+{#  </div>#}
+{#    <br/>#}
+
+  <button type="submit" class="btn btn-secondary">დასტური</button>
+
+</form>
+
+{% endblock %}

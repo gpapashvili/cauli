@@ -1,0 +1,80 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+
+    <a class="navbar-brand" href="{% url 'home' %}">ნინოს იუველირია</a>
+
+    <button class="navbar-toggler" type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+{#        <li class="nav-item">#}
+{#          <a class="nav-link" href="{% url 'catalog' %}">კატალოგი</a>#}
+{#        </li>#}
+{#        <li class="nav-item">#}
+{#          <a class="nav-link" href="{% url 'lot_list' %}">პროდუქცია</a>#}
+{#        </li>#}
+
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle"
+             href="#" id="navbarDropdown"
+             role="button"
+             data-bs-toggle="dropdown"
+             aria-expanded="false">
+            დამხმარე სიები
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_stones_changelist' %}">ქვები</a></li>#}
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_metals_changelist' %}">მეტალები</a></li>#}
+            <li><hr class="dropdown-divider"></li>
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_masters_changelist' %}">ხელოსნები</a></li>#}
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_currencies_changelist' %}">ვალუტა</a></li>#}
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_genders_changelist' %}">სქესი</a></li>#}
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_modelcategories_changelist' %}">მოდელის კატეგორია</a></li>#}
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_stonenames_changelist' %}">ქვის სახელები</a></li>#}
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_stonequalities_changelist' %}">ქვის ხარისხი</a></li>#}
+{#            <li><a class="dropdown-item" href="{% url 'admin:webpage_units_changelist' %}">ერთეულები</a></li>#}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'admin:index' %}">ადმინისტრირება</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link disabled">Disabled</a>
+        </li>
+
+
+      </ul>
+
+      <form class="d-flex" role="search">
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">ძებნა</button>
+      </form>
+
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+              {% if user.is_authenticated %}
+              <a class="nav-link" href="{% url 'logout_user' %}">სისტემიდან გამოსვლა</a>
+              {% else %}
+              <a class="nav-link" href="{% url 'login_user' %}">სისტემაში შესვლა</a>
+              {% endif %}
+          </li>
+      </ul>
+
+      <ul class="navbar-nav">
+          <li>
+              <a class="nav-link" href="#" id="themeToggle">ფერი</a>
+          </li>
+      </ul>
+
+    </div>
+  </div>
+</nav>
