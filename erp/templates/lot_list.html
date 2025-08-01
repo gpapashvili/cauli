@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>სრული პარტია</h2>
+    <a href="{% url 'lot_create' %}" class="btn btn-primary mb-3">დაამატე ახალი პარტია</a>
+
+    <table class="table table-striped ">
+        <thead>
+            <tr class="table align-middle">
+                <th>პარტიის N</th>
+                <th>თარიღი</th>
+                <th>მეტალი</th>
+                <th>მასტერი</th>
+                <th>მოდ. რაოდ.</th>
+                <th>ფასი</th>
+                <th>ღირებულება</th>
+                <th>კომენტარი</th>
+                <th>...</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lot in lots %}
+            <tr>
+                <td><a href="{% url 'lot_update' lot.lot_id %}" class="btn btn-sm btn-primary">{{ lot.lot_id }}</a></td>
+                <td>{{ lot.lot_date }}</td>
+                <td>{{ lot.metal_full_name }}</td>
+                <td>{{ lot.master_full_name }}</td>
+                <td>{{ lot.model_quantity }}</td>
+                <td>{{ lot.price }}</td>
+                <td>{{ lot.cost }}</td>
+                <td>{{ lot.note }}</td>
+                <td width="10%">
+                    <div class="mb-3">
+                        <a href="{% url 'lot_delete' lot.lot_id %}" class="btn btn-sm btn-danger">პარტიის წაშლა</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

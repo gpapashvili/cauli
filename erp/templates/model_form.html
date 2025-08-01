@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if action == 'დამატება' %}
+    <h2>კატალოგში ახალი მოდელის {{ action }} </h2>
+    {% else %}
+    <h2>კატალოგში {{ form.model_id.value }} მოდელზე ინფორმაციის {{ action }} </h2>
+{#    <center><img src="/media/{{ form.image_location.value }}" alt="model" width="200" height="200"></center>#}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="mb-2 d-flex gap-2">
+           <div class="mb-1 ">
+               <br>
+               <img src="/media/{{ form.image_location.value }}" alt="არ არის სურათი" width="200" height="200">
+               <br><br>
+               <button type="submit" class="btn btn-primary">{{ action }}</button>
+               <a href="{% url 'catalog' %}" class="btn btn-secondary">უკან</a>
+            </div>
+            <div class="mb-1">
+                {% for field in form %}
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

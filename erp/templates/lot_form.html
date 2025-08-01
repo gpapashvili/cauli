@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    {% if lotform.instance.lot_id %}
+        <h2>{{ action }} პარტია N <span style="color: Red">{{ lotform.instance.lot_id }}</span></h2>
+    {% else %}
+        <h2>{{ action }} პარტია</h2>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3 d-flex gap-2">
+            {{ lotform }}
+        </div>
+        <button type="submit" class="btn btn-primary">{{ action }}</button>
+        <a href="{% url 'lot_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+
+    <hr>
+
+    <h2>პარტია N <span style="color: Red">{{ lotform.instance.lot_id }}</span>-ში შემავალი მოდელები</h2>
+    <table class="table table-striped ">
+        <thead>
+            <tr class="table align-middle">
+                <th>სურათი</th>
+                <th>მოდელის N</th>
+                <th>
+                    <table class="table table-sm">
+                        <tr>
+                          <th>ქვის სახელი_ზომა</th>
+                          <th>წონა სულ</th>
+                          <th>წონა ერთ</th>
+                          <th>ცალი</th>
+                          <th>მოქმედება</th>
+                        </tr>
+                    </table>
+                </th>
+                <th>...</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for model in lot_models %}
+            <tr>
+                <td><img src="/media/{{ model.image_location }}" alt="model" width="200" height="200"></td>
+                <td><a href="{% url 'model_update' model.model_id %}" class="btn btn-sm btn-primary">{{ model.model_id }}</a></td>
+                <td>
+                  <table class="table table-striped table-responsive-sm">
+                      {% for stone in lot_stones %}
+                          {% if stone.model_id == model.model_id and stone.tmstmp == model.tmstmp %}
+                            <tr>
+                              <td>{{ stone.stone_full_name }}</td>
+                              <td>{{ stone.total_weight }}</td>
+                              <td>{{ stone.weight }}</td>
+                              <td>{{ stone.quantity | floatformat:"0" }}</td>
+                              <td>
+                                  <a href="{% url 'lot_model_stone_change' lotform.instance.lot_id model.model_id stone.tmstmp stone.stone_full_name %}" class="btn btn-sm btn-secondary">შც</a>
+                                  <a href="{% url 'lot_model_stone_delete' lotform.instance.lot_id model.model_id stone.tmstmp stone.stone_full_name %}" class="btn btn-sm btn-danger">წ</a>
+                              </td>
+                            </tr>
+                          {% endif %}
+                      {% endfor %}
+                  </table>
+                </td>
+                <td width="10%">
+                    <div class="mb-3">
+                        <a href="{% url 'model_2_lot_add' model.model_id lotform.instance.lot_id %}" class="btn btn-sm btn-secondary">წარმოებაში დამატება</a>
+                    </div>
+                    <div class="mb-3">
+                        <a href="{% url 'lot_model_stone_add' lotform.instance.lot_id model.model_id model.tmstmp %}" class="btn btn-sm btn-primary">ქვის დამატება</a>
+                    </div>
+                    <div class="mb-3">
+                        <a href="{% url 'lot_model_delete' lotform.instance.lot_id model.model_id model.tmstmp %}" class="btn btn-sm btn-danger">მოდელის წაშლა</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

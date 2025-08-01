@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>სრული კატალოგი</h2>
+    <a href="{% url 'model_create' %}" class="btn btn-primary mb-3">დაამატე ახალი მოდელი</a>
+
+    <table class="table table-striped ">
+        <thead>
+            <tr class="table align-middle">
+                <th>სურათი</th>
+                <th>მოდელის N</th>
+                <th>სახელი</th>
+                <th>
+                    <table class="table table-sm">
+                        <tr>
+                          <th>ქვის სახელი_ზომა</th>
+                          <th>წონა სულ</th>
+                          <th>წონა ერთ</th>
+                          <th>ცალ.</th>
+                          <th>წაშლა</th>
+                        </tr>
+                    </table>
+                </th>
+                <th>...</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for model in all_models %}
+            <tr>
+                <td><img src="/media/{{ model.image_location }}" alt="model" width="200" height="200"></td>
+                <td><a href="{% url 'model_update' model.model_id %}" class="btn btn-sm btn-primary">{{ model.model_id }}</a></td>
+                <td>{{ model.model_name }}</td>
+                <td>
+                  <table class="table table-striped table-sm">
+                      {% for stone in all_model_stones %}
+                          {% if stone.model_id == model.model_id %}
+                            <tr>
+                              <td>{{ stone.stone_full_name }}</td>
+                              <td>{{ stone.total_weight }}</td>
+                              <td>{{ stone.weight }}</td>
+                              <td>{{ stone.quantity | floatformat:"0" }}</td>
+                              <td><a href="{% url 'model_stone_delete' model.model_id stone.stone_full_name %}" class="btn btn-sm btn-danger">წ</a></td>
+                            </tr>
+                          {% endif %}
+                      {% endfor %}
+                  </table>
+                </td>
+                <td width="10%">
+                    <div class="mb-3">
+                        <a href="{% url 'model_2_lot_add' model.model_id '0' %}" class="btn btn-sm btn-secondary">წარმოებაში დამატება</a>
+                    </div>
+                    <div class="mb-3">
+                        <a href="{% url 'model_stone_add' model.model_id %}" class="btn btn-sm btn-primary">ქვის დამატება</a>
+                    </div>
+                    <div class="mb-3">
+                        <a href="{% url 'model_delete' model.model_id %}" class="btn btn-sm btn-danger">მოდელის წაშლა</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

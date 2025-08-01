@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG')
 
-ALLOWED_HOSTS = ['127.0.0.1', '192.168.192.10', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', '192.168.192.10']
 
 
 # Application definition
@@ -61,6 +61,7 @@ ROOT_URLCONF = 'cauli.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        #'DIRS': [BASE_DIR / 'templates'], do not now why this was in old project
         'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -120,7 +121,7 @@ TIME_ZONE = 'Asia/Tbilisi'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Default primary key field type
