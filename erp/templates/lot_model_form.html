@@ -3,10 +3,9 @@
 {% block content %}
 <div class="container mt-4">
     {% if action == 'დამატება' %}
-    <h2>კატალოგში ახალი მოდელის {{ action }} </h2>
+    <h2>{{ form.lot_id.value }} პარტიაში ახალი მოდელის {{ action }} </h2>
     {% else %}
-    <h2>კატალოგში {{ form.model_id.value }} მოდელზე ინფორმაციის {{ action }} </h2>
-{#    <center><img src="/media/{{ form.image_location.value }}" alt="model" width="200" height="200"></center>#}
+    <h2>პარტია N {{ form.lot_id.value }}-ში {{ form.model_id.value }} მოდელზე ინფორმაციის {{ action }} </h2>
     {% endif %}
 
     <form method="post" enctype="multipart/form-data">
@@ -15,15 +14,18 @@
         <div class="mb-2 d-flex gap-2">
            <div class="mb-1 ">
                <br>
-               <img src="/media/{{ form.image_location.value }}" alt="უსურათო" width="200" height="200">
+               <img src="/media/{{ image_location }}" alt="უსურათო" width="200" height="200">
                <br><br>
                <button type="submit" class="btn btn-primary">{{ action }}</button>
-               <a href="{% url 'catalog' %}" class="btn btn-secondary">უკან</a>
+               <a href="{% url 'lot_update' form.lot_id.value %}" class="btn btn-secondary">უკან</a>
             </div>
             <div class="mb-1">
                 {% for field in form %}
                     <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                     {{ field }}
+                    {% if field.label == 'გაყიდული' %}
+                        <br>
+                    {% endif %}
                 {% endfor %}
             </div>
         </div>

@@ -1,3 +1,4 @@
+import pandas as pd
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from sqlalchemy import Engine
@@ -102,9 +103,8 @@ def catalog(request):
     login_db(request)
     all_models = Catalog.objects.all()
     stat = """SELECT cs.model_id, cs.stone_full_name, 
-                s.weight * cs.quantity::integer AS total_weight,
-                s.weight, cs.quantity,
-                CONCAT(cs.quantity::integer::text, ' ', cs.quantity_unit) AS quantity_unit
+                s.weight * cs.quantity AS total_weight,
+                s.weight, cs.quantity
               FROM catalog AS c
                 LEFT JOIN catalog_stones AS cs ON c.model_id = cs.model_id
                 LEFT JOIN stones AS s on cs.stone_full_name = s.stone_full_name"""
@@ -142,7 +142,7 @@ def model_update(request, model_id):
 def model_delete(request, model_id):
     model = get_object_or_404(Catalog, model_id=model_id)
     lot_ids = tuple(lot.lot_id.lot_id for lot in LotModels.objects.filter(model_id=model_id))
-    if model_id in LotModels.objects.values_list('model_id', flat=True):
+    if lot_ids:
         messages.error(request, f'მოდელი ვერ წაიშლება სანამ პარტია {lot_ids}-შია დამატებული!')
         return redirect('catalog')
     elif request.method == 'POST':
@@ -208,12 +208,14 @@ def model_2_lot_add(request, model_id, lot_id):
 from .models import Lots, Metals, Masters
 def lot_list(request):
     login_db(request)
+    weights = pd.DataFrame(pd_query("SELECT col_1, col_2 FROM total_final_per_lot", POSTGRESQL_ENGINE)).set_index('col_1')
+    print(weights)
     lots = Lots.objects.all()
-    # stat = """SELECT l.lot_id, l.lot_date, l.metal_full_name, l.master_full_name, l.note,
-    #             lot.model_quantity, lot.price, lot.cost
-    #           FROM lots AS l
-    #             LEFT JOIN production_models AS pm ON l.lot_id = pm.lot_id"""
-    # catalog_stones = pd_query(stat, POSTGRESQL_ENGINE)
+    for lot in lots:
+        try:
+            lot.total_lot_weight = weights.loc[lot.lot_id, 'col_2'] if weights.loc[lot.lot_id, 'col_2'] >=0 else 'Err'
+        except:
+            lot.total_lot_weight = 'Err'
     return render(request, 'lot_list.html', {'lots': lots})
 
 
@@ -230,30 +232,25 @@ def lot_create(request):
     return render(request, 'lot_form.html', {'lotform': lotform, 'action': 'შექმენი'})
 
 
-from .models import LotModels
 def lot_update(request, lot_id):
     login_db(request)
     lot = get_object_or_404(Lots, lot_id=lot_id)
 
-    stat = f"""SELECT c.image_location, lm.model_id, lm.tmstmp
+    stat = f"""SELECT c.image_location, lm.model_id, lm.tmstmp, lm.sold, lm.weight
                FROM lot_models AS lm
                 LEFT JOIN catalog AS c ON lm.model_id = c.model_id
-               WHERE lm.lot_id = {lot_id}"""
+               WHERE lm.lot_id = {lot_id}
+               ORDER BY lm.sold, lm.tmstmp DESC, lm.model_id"""
     lot_models = pd_query(stat, POSTGRESQL_ENGINE)
 
     stat = f"""SELECT lms.model_id, lms.stone_full_name, lms.quantity, lms.weight, lms.tmstmp,
-                    lms.quantity * lms.weight AS total_weight
+                    lms.cost_piece, lms.cost_manufacturing_piece, lms.margin_piece, lms.price,
+                    lms.quantity * lms.weight AS total_weight,
+                    lms.quantity * ( lms.cost_piece + lms.cost_manufacturing_piece + lms.margin_piece ) AS total_price
                FROM lot_model_stones AS lms
-               WHERE lms.lot_id = {lot_id}"""
+               WHERE lms.lot_id = {lot_id}
+               ORDER BY lms.stone_full_name"""
     lot_stones = pd_query(stat, POSTGRESQL_ENGINE)
-
-    # lotmodels = LotModels.objects.filter(lot_id=lot_id)
-    # lotmodels = get_list_or_404(LotModels, lot_id=lot_id)
-    # for each in lotmodels:
-    #     model = get_object_or_404(Catalog, model_id=each.model_id)
-    #     image = model.image_location
-    #     each.__setattr__('image', image)
-    #     print(each.image)
 
     if request.method == 'POST':
         lotform = LotForm(request.POST, instance=lot)
@@ -264,18 +261,7 @@ def lot_update(request, lot_id):
     else:
         lotform = LotForm(instance=lot)
 
-    return render(request, 'lot_form.html', {'lotform': lotform, 'action': 'შეცვალე', 'lot_models':lot_models, 'lot_stones':lot_stones})
-
-    all_models = Catalog.objects.all()
-    stat = """SELECT cs.model_id, cs.stone_full_name, 
-                s.weight * cs.quantity::integer AS total_weight,
-                s.weight, cs.quantity,
-                CONCAT(cs.quantity::integer::text, ' ', cs.quantity_unit) AS quantity_unit
-              FROM catalog AS c
-                LEFT JOIN catalog_stones AS cs ON c.model_id = cs.model_id
-                LEFT JOIN stones AS s on cs.stone_full_name = s.stone_full_name"""
-    all_model_stones = pd_query(stat, POSTGRESQL_ENGINE)
-    return render(request, 'model_list.html', {'all_models': all_models, 'all_model_stones': all_model_stones})
+    return render(request, 'lot_form.html', {'lotform': lotform, 'action': 'დაიმახსოვრე', 'lot_models':lot_models, 'lot_stones':lot_stones})
 
 
 def lot_delete(request, lot_id):
@@ -285,6 +271,32 @@ def lot_delete(request, lot_id):
         messages.success(request, 'პარტია წარმატებით წაიშალა.')
         return redirect('lot_list')
     return render(request, 'lot_delete.html', {'lot': lot})
+
+
+from .forms import LotModelsForm
+def lot_model_update(request, lot_id, model_id, tmstmp):
+
+    lotmodel = get_object_or_404(LotModels, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp)
+    image_location = get_object_or_404(Catalog, model_id=model_id).image_location
+    form = LotModelsForm(instance=lotmodel)
+
+    if request.method == 'POST':
+        form = LotModelsForm(request.POST, instance=lotmodel)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'პარტიის მოდელზე ინფორმაცია წარმატებით განახლდა.')
+            return redirect('lot_update', lot_id=lot_id)
+        else:
+            messages.error(request, 'პრობლემა ინფორმაციის განახლებისას!')
+    return render(request, 'lot_model_form.html', {'form': form, 'action': 'განახლება', 'image_location': image_location})
+
+
+def lot_model_sold(request, lot_id, model_id, tmstmp, sold):
+
+    lotmodel = get_object_or_404(LotModels, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp)
+    lotmodel.sold = sold
+    lotmodel.save()
+    return redirect('lot_update', lot_id=lot_id)
 
 
 from .models import LotModels
@@ -304,35 +316,64 @@ def lot_model_delete(request, lot_id, model_id, tmstmp):
 from .forms import LotModelStonesForm
 def lot_model_stone_add(request, lot_id, model_id, tmstmp):
 
-    lot_model_stone = LotModelStones(
-        lot_id=Lots.objects.get(lot_id=lot_id),
-        model_id=Catalog.objects.get(model_id=model_id),
-        tmstmp=LotModels.objects.get(tmstmp=tmstmp),
-    )
+    cost_manufacturing_piece = django_sql(f"""(SELECT cost_manufacturing_stone FROM lots WHERE lot_id = {lot_id})""")[0][0]
+    margin_piece = django_sql(f"""(SELECT margin_stones FROM lots WHERE lot_id = {lot_id})""")[0][0]
+    data = {'lot_id': lot_id, 'model_id': model_id, 'tmstmp': tmstmp}
+    lot_model_stone = LotModelStones(lot_id=Lots.objects.get(lot_id=lot_id), model_id=Catalog.objects.get(model_id=model_id),
+                                     tmstmp=LotModels.objects.get(tmstmp=tmstmp),
+                                     cost_manufacturing_piece=cost_manufacturing_piece, margin_piece=margin_piece)
     form = LotModelStonesForm(instance=lot_model_stone)
 
     if request.method == 'POST':
+        login_db(request)
         form = LotModelStonesForm(request.POST)
-        if form.is_valid():
-            form.save()
+        data['stone_full_name'] = request.POST.get('stone_full_name')
+        data['quantity'] = request.POST.get('quantity')
+        data['cost_piece'] = request.POST.get('cost_piece') or None
+        data['cost_manufacturing_piece'] = request.POST.get('cost_manufacturing_piece') or None
+        data['margin_piece'] = request.POST.get('margin_piece') or None
+        data['note'] = request.POST.get('note') or None
+        data = [{k:v for k, v in data.items() if v is not None}]
+        try:
+            insert_query('lot_model_stones', data, POSTGRESQL_ENGINE)
+        except Exception as e:
+            messages.error(request, e)
+        else:
             messages.success(request, f"N { lot_id } პარტიაში { model_id } მოდელზე მოდელზე ქვა {request.POST.get('stone_full_name')} წარმატებით დაემატა.")
-            return redirect('lot_update', lot_id=lot_id )
+        return redirect('lot_update', lot_id=lot_id )
 
     return render(request, 'lot_model_stone_form.html', {'form': form, 'action': 'დამატება', 'lot_id':lot_id}, )
 
 
+from .utils import django_sql
 def lot_model_stone_change(request, lot_id, model_id, tmstmp, stone_full_name):
 
     lot_model_stone = get_object_or_404(LotModelStones, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp, stone_full_name=stone_full_name)
     form = LotModelStonesForm(instance=lot_model_stone)
 
     if request.method == 'POST':
-        form = LotModelStonesForm(request.POST)
-        if form.is_valid():
-            lot_model_stone.delete()
-            form.save()
+        login_db(request)
+        cost_piece = django_sql(f"""(SELECT MAX(cost_piece) FROM transactions
+                                        WHERE tmstmp > to_char(CURRENT_TIMESTAMP - '6 months'::INTERVAL, 'YY-MM-DD-HH24-MI-SS') 
+                                        AND item = '{request.POST.get('stone_full_name')}')""")[0][0]
+        cost_manufacturing_piece = django_sql(f"""(SELECT cost_manufacturing_stone FROM lots WHERE lot_id = {lot_id})""")[0][0]
+        margin_piece = django_sql(f"""(SELECT margin_stones FROM lots WHERE lot_id = {lot_id})""")[0][0]
+
+        stat = f"""UPDATE lot_model_stones
+                    SET stone_full_name = '{request.POST.get('stone_full_name')}',
+                    quantity = {request.POST.get('quantity')},
+                    cost_piece = {request.POST.get('cost_piece') or cost_piece or "NULL"},
+                    cost_manufacturing_piece = {request.POST.get('cost_manufacturing_piece') or cost_manufacturing_piece or "NULL"},
+                    margin_piece = {request.POST.get('margin_piece') or margin_piece or "NULL"},
+                    note = '{request.POST.get('note')}'
+                   WHERE  lot_id={lot_id} AND model_id='{model_id}' AND tmstmp='{tmstmp}' AND stone_full_name='{stone_full_name}'"""
+        try:
+            crt_query(stat, POSTGRESQL_ENGINE)
+        except Exception as e:
+            messages.error(request, e)
+        else:
             messages.success(request, f"N { lot_id } პარტიაში { model_id } მოდელზე მოდელზე ქვა {stone_full_name} შეიცვალა {request.POST.get('stone_full_name')} ქვით")
-            return redirect('lot_update', lot_id=lot_id )
+        return redirect('lot_update', lot_id=lot_id )
 
     return render(request, 'lot_model_stone_form.html', {'form': form, 'action': 'შეცვლა'}, )
 
@@ -349,6 +390,153 @@ def lot_model_stone_delete(request, lot_id, model_id, tmstmp, stone_full_name):
 
     return render(request, 'lot_model_stone_delete.html', {'lotmodelstone': lotmodelstone})
 
+
+# transactions
+
+from .models import Transactions
+def transaction_list(request, transaction_type = 'ყველა გატარება', order_by='-tmstmp:transaction_type:lot_id:item'):
+
+    login_db(request)
+    # TODO: implement pagination later
+
+    # TODO: implement sorting later
+    order_by = [f"{field.replace('-', '')}  DESC" if '-' in field else field for field in order_by.split(':')]
+    order_by = 'ORDER BY ' + ' , '.join(order_by)
+
+    # filter by transaction_type
+    where = f"transaction_type = '{transaction_type}'" if transaction_type != 'ყველა გატარება' else 'true'
+    where = 'WHERE ' + where
+
+    stat = f"""SELECT * FROM transactions {where} {order_by}"""
+    transactions = pd_query(stat, POSTGRESQL_ENGINE)
+
+    form = AddTransactionForm(request.POST) # request.POST needed to keep filter with previous filter values
+    form.use_required_attribute = False # remove required tags for filter forms
+
+    if request.method == 'POST' and len(transactions):
+        fields = transactions[0].index
+        for k, v in request.POST.items():
+            if v != '' and k in fields or k in ['from', 'to']:
+                if isinstance(v, (int, float)):
+                    where += f" AND {k} = {v}"
+                    # where.append(f"{k} = {v}")
+                elif k == 'from_date' and v:
+                    where += f" AND tmstmp > '{v[-8:]}-00-00-00'"
+                    # where.append(f"tmstmp > '{v[-8:]}-00-00-00'")
+                elif k == 'to_date' and v:
+                    where += f" AND tmstmp < '{v[-8:]}-99-99-99'"
+                    # where.append(f"tmstmp < '{v[-8:]}-99-99-99'")
+                elif k == 'description' and v:
+                    where += f" AND  {k} ILIKE '%{v}%'"
+                    # where.append(f" {k} ILIKE '%{v}%'")
+                elif k not in ['from_date', 'to_date']:
+                    where += f" AND {k} = '{v}'"
+                    # where.append(f"{k} = '{v}'")
+        # where ="WHERE " + " AND ".join(where) if where else ""
+        stat = f"""SELECT * FROM transactions {where} {order_by}"""
+        print(stat)
+        transactions = pd_query(stat, POSTGRESQL_ENGINE)
+
+    totals = pd.DataFrame(transactions)
+
+    return render(request, 'transaction_list.html', {'transactions': transactions, 'form': form, 'totals': totals, 'transaction_type':transaction_type})
+
+
+from .forms import AddTransactionForm, AddSinjiTransactionForm, AddCastTransactionForm, AddProcTransactionForm
+def transaction_create(request, transaction_type='ყველა გატარება'):
+    # determine transaction type
+    login_db(request)
+
+    info_table = []
+
+    tbl = [pd.Series({'col_1': 'მეტალები ჯამურად', 'col_2': 'სულ (გრამი)', 'col_3': 'ერთეულის ფასი (ლარი)','col_4': 'სულ ფასი (ლარი)'})]
+    stat = """SELECT * FROM total_metals_per_metal"""
+    tbl.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    info_table.append(tbl)
+
+    tbl = [pd.Series({'col_1': 'სხვა მატერიალები ჯამურად', 'col_2': 'სულ (გრამი)', 'col_3': 'ერთეულის ფასი (ლარი)','col_4': 'სულ ფასი (ლარი)'})]
+    stat = """SELECT * FROM total_other_materials"""
+    tbl.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    info_table.append(tbl)
+
+    tbl = [pd.Series( {'col_1': 'ბოლო 5 თარიღზე გადაყვანები', 'col_2': 'სულ აღებული (გრამი)', 'col_3': 'სულ დაბრუნებული (გრამი)', 'col_4': 'სხვაობა (უნდა იყოს 0)'})]
+    stat = """SELECT * FROM total_sinji_per_date LIMIT 5"""
+    tbl.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    info_table.append(tbl)
+
+    tbl = [pd.Series( {'col_1': 'ბოლო 5 პარტიაზე ჩამოსხმები', 'col_2': 'ჩამოსხმული წონა (გრამი)', 'col_3': 'ჩამოსხმისას დანაკარგი (გრამი)',
+                       'col_4': 'ჩამოსხმისას დანაკარგი (ლარი)', 'col_5': 'ჩამოსხმის ღირებულება (ლარი)'})]
+    stat = """SELECT * FROM total_cast_per_lot LIMIT 5"""
+    tbl.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    info_table.append(tbl)
+
+    tbl = [pd.Series( {'col_1': 'ბოლო 5 პარტიაზე დამუშავება', 'col_2': 'დამუშავებული წონა (გრამი)', 'col_3': 'დამუშავებული ოქროს ფასი (ლარი)',
+                       'col_4': 'დამუშავების დანაკარგი (გრამი)', 'col_5': 'დამუშავების დანაკარგი (გრამი)', 'col_6': 'ოქრომჭედლის მომს. საფ (ლარი)',
+                       'col_7': 'სხვა ხარჯი (ლარი)'} ) ]
+    stat = """SELECT * FROM total_final_per_lot LIMIT 5"""
+    tbl.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    info_table.append(tbl)
+
+    tbl = [pd.Series( {'col_1': 'ბოლო 5 პარტაზე მოდელების ჯამები', 'col_2': 'სულ წონა ბეჭდებიდან (გრამი)', 'col_3': 'სულ მოდელები (ცალი)', 'col_4': 'სულ ნაჭერი'} ) ]
+    stat = """SELECT * FROM total_lot_model_per_lot LIMIT 5"""
+    tbl.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    info_table.append(tbl)
+
+    tbl = [ pd.Series( {'col_1': 'ბოლო 5 პარტია', 'col_2': 'დამუშავებული წონა (გრამი)' , 'col_3': 'დამუშავებული ოქროს ფასი (ლარი)',
+                        'col_4': 'სულ დანაკარგი (გრამი)', 'col_5': 'სულ დანაკარგი (ლარი)', 'col_6': 'ხელფასები და სხვა (ლარი)',
+                        'col_7': 'სულ თვითღირებულება (ლარი)', 'col_8': 'თვითღირებულება გრამზე (ლარი)'} ) ]
+    stat = """SELECT * FROM cost_calculation_per_lot LIMIT 5"""
+    tbl.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    info_table.append(tbl)
+
+    if transaction_type == 'გადაყვანა':
+        Form = AddSinjiTransactionForm
+    elif transaction_type == 'ჩამოსხმა':
+        Form = AddCastTransactionForm
+    elif transaction_type == 'დამუშავება':
+        Form = AddProcTransactionForm
+    else:
+        Form = AddTransactionForm
+        info_table = []
+
+    form = Form()
+
+    if request.method == 'POST':
+        form = Form(request.POST, request.FILES)
+        print(request.POST, request.FILES)
+        print(form.errors)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'ტრანზაქცია წარმატებით გატარდა.')
+            return redirect('transaction_type', transaction_type)
+
+    return render(request, 'transaction_form.html', {'form': form, 'info_table': info_table, 'transaction_type': transaction_type, 'action': 'დამატება'})
+
+
+def transaction_delete(request, tmstmp, item):
+    transaction = get_object_or_404(Transactions, tmstmp=tmstmp, item=item)
+    if request.method == 'POST':
+        transaction.delete()
+        messages.success(request, 'ტრანზაქცია წარმატებით წაიშალა.')
+        return redirect('transaction_list')
+    return render(request, 'transaction_delete.html', {'transaction': transaction})
+
+
+def transaction_update(request, tmstmp, item, transaction_type='ყველა გატარება'):
+
+    transaction = get_object_or_404(Transactions, tmstmp=tmstmp, item=item)
+    form = AddTransactionForm(instance=transaction)
+
+    if request.method == 'POST':
+        form = AddTransactionForm(request.POST, request.FILES, instance=transaction)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'ტრანზაქციაზე ინფორმაცია წარმატებით განახლდა.')
+            return redirect('transaction_list')
+        else:
+            messages.error(request, 'პრობლემა ინფორმაციის განახლებისას!')
+
+    return render(request, 'transaction_form.html', {'form': form, 'transaction_type': transaction_type, 'action': 'შეცვლა'})
 
 # other
 

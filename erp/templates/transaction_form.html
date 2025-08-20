@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<hr class="container mt-4">
+    {% if action == 'დამატება' %}
+        <h2>ახალი {{ transaction_type|slice:":-1" }}ის {{ action }} </h2>
+    {% else %}
+        <h2>{{ addtransactionform.model_id.value }} ტრანზაქციაზე ინფორმაციის {{ action }} </h2>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="mb-2 d-flex gap-2">
+           <div class="mb-1 text-center">
+               <br>
+               <img src="/media/{{ form.image_location.value }}" alt="უსურათო" width="400" height="400">
+               <br><br>
+               <button type="submit" class="btn btn-primary">{{ action }}</button>
+               <a href="{% url 'transaction_type' transaction_type %}" class="btn btn-secondary">უკან</a>
+            </div>
+            <div class="mb-1">
+                {% for field in form %}
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                {% endfor %}
+            </div>
+            <div class="mb-1">
+                {% if transaction_type == 'გადაყვანა' %}
+                    <p>არსებული სინჯებიდან გადადნობით ვიღებთ ახალ სინჯს</p>
+                    <p>ორი ტიპის გატარება არის</p>
+                    <ol>
+                     <li>ვიღებთ გადასაყვანად მეტალს
+                        <ul>
+                            <li>რაოდენობას ვატარებთ მინუსით</li>
+                            <li>აკლდება შესაბამის მეტალს</li>
+                        </ul>
+                     </li>
+                     <li>ვაბრუნებთ გადაყვანილ მეტალს
+                        <ul>
+                            <li>რაოდენობას ვატარებთ პლიუსით</li>
+                            <li>ემატება შესაბამის მეტალს</li>
+                        </ul>
+                     </li>
+                    </ol>
+                {% elif  transaction_type == 'ჩამოსხმა'  %}
+                    <p>საიუველირო ნაწარმის ჩამოსხმა</p>
+                    <p>ოთხი ტიპის გატარება არის</p>
+                    <ol>
+                     <li>ვიღებთ ჩამოსხმისთვის მეტალს
+                        <ul>
+                            <li>რაოდენობას ვატარებთ მინუსით</li>
+                            <li>აკლდება შესაბამის მეტალს</li>
+                        </ul>
+                     </li>
+                     <li>ვაბრუნებთ მეტალს (ჯართს)
+                        <ul>
+                            <li>რაოდენობას ვატარებთ პლიუსით</li>
+                            <li>ემატება შესაბამის მეტალს</li>
+                        </ul>
+                     </li>
+                     <li>გადაყვანის დანაკარგის გატარება
+                        <ul>
+                             <li>მასალაში ვუთითებთ "ოქრო-585 დანაკარგი"</li>
+                             <li>მეტალის რაოდენობა არ იცვლება</li>
+                             <li>რაოდენობას ვატარებთ პლიუსით</li>
+                        </ul>
+                     </li>
+                     <li>ჩამოსხმის მომსახურების გადახდა
+                        <ul>
+                             <li>მასალაში ვუთითებთ ფულს</li>
+                             <li>რაოდენობაში ვუთითებთ ჩამოსხმის წონას მინუსით</li>
+                             <li>ფასში გრამზე გადასახადს</li>
+                             <li>სულ დაიანგარიშებს ფასს და გამოაკლდება ფულს</li>
+                        </ul>
+                     </li>
+                    </ol>
+                {% elif  transaction_type == 'დამუშავება'  %}
+                    <p>საიუველირო ნაწარმის დამუშავება</p>
+                    <p>ოთხი ტიპის გატარება არის</p>
+                    <ol>
+                     <li>ვიღებთ დამუშავებისთვის მეტალს (პრიპოი, მავთული)
+                        <ul>
+                            <li>რაოდენობას ვატარებთ მინუსით</li>
+                            <li>აკლდება შესაბამის მეტალს</li>
+                        </ul>
+                     </li>
+                     <li>ხელოსანი აბრუნებს ნარჩენებს
+                        <ul>
+                            <li>რაოდენობას ვატარებთ პლიუსით</li>
+                            <li>ემატება შესაბამის მეტალს</li>
+                        </ul>
+                     </li>
+                     <li>დამუშავების დანაკარგის გატარება
+                        <ul>
+                             <li>მასალაში ვუთითებთ "ოქრო-585 დანაკარგი"</li>
+                             <li>მეტალის რაოდენობა არ იცვლება</li>
+                             <li>რაოდენობას ვატარებთ პლიუსით</li>
+                        </ul>
+                     </li>
+                     <li>დამუშავების მომსახურების გადახდა
+                        <ul>
+                             <li>მასალაში ვუთითებთ ფულს</li>
+                             <li>რაოდენობაში ვუთითებთ ჩამოსხმის წონას მინუსით</li>
+                             <li>ფასში გრამზე გადასახადს</li>
+                             <li>სულ დაიანგარიშებს ფასს და გამოაკლდება ფულს</li>
+                        </ul>
+                     </li>
+                    </ol>
+                {% else %}
+                    <p>ინსტრუქცია 4</p>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+    {% for table in info_table  %}
+        <hr style="height:2px;border-width:0;color:red;background-color:red">
+        <table class="table table-striped ">
+            <tbody>
+                {% for row in table  %}
+                    <tr>
+                        {% for item in row %}
+                            <td class="text-center">{{ item }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+</div>
+{% endblock %}

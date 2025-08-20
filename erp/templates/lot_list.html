@@ -12,7 +12,13 @@
                 <th>თარიღი</th>
                 <th>მეტალი</th>
                 <th>მასტერი</th>
-                <th>მოდ. რაოდ.</th>
+                <th>სულ ბეჭდები</th>
+                <th>გაყ. ბეჭდები</th>
+                <th>პარტ. წონა</th>
+                <th>მოდელ. წონა</th>
+                <th>ქვის ჩას.</th>
+                <th>მოგ. ქვაზე</th>
+                <th>სულ ქვ.ფასი</th>
                 <th>ფასი</th>
                 <th>ღირებულება</th>
                 <th>კომენტარი</th>
@@ -25,13 +31,21 @@
                 <td><a href="{% url 'lot_update' lot.lot_id %}" class="btn btn-sm btn-primary">{{ lot.lot_id }}</a></td>
                 <td>{{ lot.lot_date }}</td>
                 <td>{{ lot.metal_full_name }}</td>
-                <td>{{ lot.master_full_name }}</td>
-                <td>{{ lot.model_quantity }}</td>
+                <td>{{ lot.master }}</td>
+                <td>{{ lot.models_count }}</td>
+                <td>{{ lot.models_sold }}</td>
+                <td>{{ lot.total_lot_weight }}</td>
+                <td>{{ lot.total_model_weight }}</td>
+                <td>{{ lot.cost_manufacturing_stone }}</td>
+                <td>{{ lot.margin_stones }}</td>
+                <td>{{ lot.total_stone_price }}</td>
                 <td>{{ lot.price }}</td>
                 <td>{{ lot.cost }}</td>
                 <td>{{ lot.note }}</td>
                 <td width="10%">
                     <div class="mb-3">
+                        <a href="{% url 'lot_delete' lot.lot_id %}" class="btn btn-sm btn-success">გატარებები</a>
+                        <br>
                         <a href="{% url 'lot_delete' lot.lot_id %}" class="btn btn-sm btn-danger">პარტიის წაშლა</a>
                     </div>
                 </td>

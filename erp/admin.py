@@ -19,11 +19,6 @@ class UnitsAdmin(admin.ModelAdmin):
     list_display = ["label", "note"]
 
 
-@admin.register(Currencies)
-class CurrenciesAdmin(admin.ModelAdmin):
-    list_display = ["label", "note"]
-
-
 @admin.register(StoneNames)
 class StoneNamesAdmin(admin.ModelAdmin):
     list_display = ["label", "note"]
@@ -45,8 +40,23 @@ class ModelCategoriesAdmin(admin.ModelAdmin):
 
 
 @admin.register(Masters)
-class ModelCategoriesAdmin(admin.ModelAdmin):
-    list_display = ["master_full_name", "note"]
+class MastersAdmin(admin.ModelAdmin):
+    list_display = ["label", "note"]
+
+
+@admin.register(TransactionTypes)
+class TransactionTypesAdmin(admin.ModelAdmin):
+    list_display = ['label', "note"]
+
+
+@admin.register(ItemTypes)
+class ItemTypesAdmin(admin.ModelAdmin):
+    list_display = ['label', "note"]
+
+
+@admin.register(MaterialsServices)
+class ItemTypesAdmin(admin.ModelAdmin):
+    list_display = ['label', "note"]
 
 
 #########Complicated  lookup tables that needs additional django_id############
@@ -54,7 +64,7 @@ class ModelCategoriesAdmin(admin.ModelAdmin):
 
 @admin.register(Metals)
 class MetalsAdmin(admin.ModelAdmin):
-    list_display = ['full_name', "metal_name", "sinji", "note", 'django_id']
+    list_display = [field.name for field in Metals._meta.fields]
 
     def full_name(self, obj):
         return f"{obj.metal_name}-{obj.sinji}"
@@ -63,7 +73,7 @@ class MetalsAdmin(admin.ModelAdmin):
 
 @admin.register(Stones)
 class StonesAdmin(admin.ModelAdmin):
-    list_display = ['full_name', "stone_name", "size", 'size_unit', 'weight', 'weight_unit', "note", 'django_id']
+    list_display = [field.name for field in Stones._meta.fields]
 
     def full_name(self, obj):
         return f"{obj.stone_name}-{obj.size}"
@@ -74,29 +84,34 @@ class StonesAdmin(admin.ModelAdmin):
 
 
 @admin.register(Lots)
-class CatalogAdmin(admin.ModelAdmin):
-    list_display = ['lot_id', "lot_date", "metal_full_name", 'master_full_name', 'note']
+class LotsAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in Lots._meta.fields]
 
 
 # if you will edit model_id, django will create a new record with now model_id and leave the old one that you should delete manually
 @admin.register(Catalog)
 class CatalogAdmin(admin.ModelAdmin):
-    list_display = ['model_id', "creation_date", "peaces", 'model_name', 'model_category', 'gender', 'image_location', 'note']
+    list_display = [field.name for field in Catalog._meta.fields]
 
 
 @admin.register(CatalogStones)
-class CatalogAdmin(admin.ModelAdmin):
-    list_display = ['model_id', "stone_full_name", "quantity", 'quantity_unit', 'note', 'django_id']
+class CatalogStonesAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in CatalogStones._meta.fields]
 
 
 @admin.register(LotModels)
-class CatalogAdmin(admin.ModelAdmin):
-    list_display = ['lot_id', "model_id", "tmstmp", 'weight', 'weight_unit', 'note']
+class LotModelsAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in LotModels._meta.fields]
 
 
 @admin.register(LotModelStones)
-class CatalogAdmin(admin.ModelAdmin):
-    list_display = ['lot_id', "model_id", "tmstmp", 'stone_full_name', 'quantity', 'quantity_unit', 'note', 'django_id']
+class LotModelStonesAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in LotModelStones._meta.fields]
+
+
+@admin.register(Transactions)
+class TransactionsAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in Transactions._meta.fields]
 
 
 ######################can mot be managed from admin#################
@@ -105,6 +120,7 @@ class CatalogAdmin(admin.ModelAdmin):
 
 
 ##########################not yet determined###########################
+
 
 
 

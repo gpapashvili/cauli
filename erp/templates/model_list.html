@@ -28,7 +28,7 @@
         <tbody>
             {% for model in all_models %}
             <tr>
-                <td><img src="/media/{{ model.image_location }}" alt="model" width="200" height="200"></td>
+                <td><img src="/media/{{ model.image_location }}" alt="უსურათო" width="200" height="200"></td>
                 <td><a href="{% url 'model_update' model.model_id %}" class="btn btn-sm btn-primary">{{ model.model_id }}</a></td>
                 <td>{{ model.model_name }}</td>
                 <td>
