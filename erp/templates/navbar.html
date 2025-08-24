@@ -20,7 +20,7 @@
           <a class="nav-link" href="{% url 'catalog' %}">კატალოგი</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'lot_list' %}">პროდუქცია</a>
+          <a class="nav-link" href="{% url 'lot_list' %}">წარმოება</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle"
@@ -31,7 +31,7 @@
             გატარებები
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="{% url 'transaction_type' 'ყველა გატარება' %}">ყველა გატარება</a></li>
+            <li><a class="dropdown-item" href="{% url 'transaction_type' 'ნებისმიერი' %}">ნებისმიერი გატარება</a></li>
                 {% for type in transaction_types %}
                     <li><a class="dropdown-item" href="{% url 'transaction_type' type.label %}">{{ type.label }}</a></li>
                 {% endfor %}

@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% load custom_tags %}
-
 <div class="container mt-4">
     {% if action == 'დამატება' %}
         <h2>ახალი {{ transaction_identifier|slice:":-1" }}ის {{ action }} {% if form.lot_id.value %}<a href="{% url 'lot_update' form.lot_id.value %}?next={{ request.path|urlencode }}" class="btn btn-secondary">{{ form.lot_id.value }} პარტიაზე</a>{% endif %}</h2>
@@ -24,16 +22,16 @@
                 </div>
                 {% if transaction_identifier == "ჩამოსხმა" or transaction_identifier == "დამუშავება" and form.lot_id.value %}
                     <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'მეტალის_აღება' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-warning">მეტალის აღება</a>
+                        <a href="{% url 'transaction_create' 'მეტალის_აღება' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-success">მეტალის აღება</a>
                     </div>
                     <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'მეტალის_დაბრუნება' form.lot_id.value %}?next={{ request.path|urlencode }}" class="btn btn-outline-secondary">ნარჩენის დაბრუნება</a>
+                        <a href="{% url 'transaction_create' 'მეტალის_დაბრუნება' form.lot_id.value %}?next={{ request.path|urlencode }}" class="btn btn-warning">ნარჩენის დაბრუნება</a>
                     </div>
                     <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'მეტალის_დანაკარგი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-danger">დანაკარგი</a>
+                        <a href="{% url 'transaction_create' 'მეტალის_დანაკარგი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-danger">დანაკარგი</a>
                     </div>
                     <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'ხელფასი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-info">ხელფასის გადახდა</a>
+                        <a href="{% url 'transaction_create' 'ხელფასი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-info">ხელფასი</a>
                     </div>
                 {% endif %}
             </div>
@@ -68,13 +66,13 @@
                             <li>
                                 <div class="mb-2 d-flex gap-2">
                                     <font color="red">მიღებული მეტალის წონა</font>
-                                    <input type="number" class="form-control" value="0" id="weight" name="" oninput="calculateSum()">
+                                    <input type="number" class="form-control" value="0" id="weight" name="" step="0.01" oninput="calculateSum()">
                                 </div>
                             </li>
                             <li>
                                 <div class="mb-2 d-flex gap-2">
                                     <font color="red">ფასის დაანგარიშება</font>
-                                    <input type="number" class="form-control" value="0" id="price" name="" oninput="calculateSum()">
+                                    <input type="number" class="form-control" value="0" id="price" name="" step="0.01" oninput="calculateSum()">
                                 </div>
                             </li>
                             <script>
@@ -158,25 +156,22 @@
                      <li>
                         <div class="mb-2 d-flex">
                             სულ ფასი
-                            <input type="number" class="form-control" id="total_cost" name="" step="0.01" oninput="calculateTotalCost()">
+                            <input type="number" class="form-control" id="total_cost" name="" oninput="calculateTotalAndPiecePrice()">
                         </div>
                     </li>
                     <li>
                         <div class="mb-2 d-flex">
                             ცალის ფასი
-                            <input type="number" class="form-control" id="piece_price" name="" step="0.01" oninput="calculatePiecePrice()">
+                            <input type="number" class="form-control" id="piece_price" name="" oninput="calculateTotalAndPiecePrice()">
                         </div>
                     </li>
                     <script>
-                        function calculateTotalCost() {
+                        function calculateTotalAndPiecePrice() {
                             const transaction_quantity = parseFloat(document.getElementById('transaction_quantity').value) || 0;
                             const cost_unit = parseFloat(document.getElementById('cost_unit').value) || 0;
-                            document.getElementById('total_cost').value = (transaction_quantity * cost_unit).toFixed(2)
-                        }
-                        function calculatePiecePrice() {
-                            const total_cost = parseFloat(document.getElementById('total_cost').value) || 0;
                             const pieces = parseFloat(document.getElementById('pieces').value) || 0;
-                            document.getElementById('piece_price').value = (total_cost / pieces).toFixed(2)
+                            document.getElementById('total_cost').value = (transaction_quantity * cost_unit).toFixed(2)
+                            document.getElementById('piece_price').value = (transaction_quantity * cost_unit / pieces).toFixed(2)
                         }
                     </script>
                     </ul>
@@ -185,7 +180,7 @@
         </div>
     </form>
     <br>
-    {% if form.lot_id.value or transaction_identifier == 'გადაყვანა' %}
+    {% if form.lot_id.value %}
         {% for header, table in transactions_table.items %}
             <center><h3>{{ header }}</h3></center>
             <hr style="height:2px;border-width:0;color:red;background-color:red">
@@ -250,13 +245,7 @@
                                 {% for row in table  %}
                                     <tr>
                                         {% for item in row %}
-                                            {% if item|is_nan %}
-                                                <td class="bg-danger">{{ item }}</td>
-                                            {% elif item == 0 %}
-                                                <td class="table-warning">{{ item }}</td>
-                                            {% else %}
-                                                <td>{{ item }}</td>
-                                            {% endif %}
+                                            <td>{{ item }}</td>
                                         {% endfor %}
                                     </tr>
                                 {% endfor %}

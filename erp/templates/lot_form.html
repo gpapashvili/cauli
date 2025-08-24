@@ -11,11 +11,24 @@
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="mb-3 d-flex gap-2">
-            {{ lotform }}
+        <div class="row">
+            {% for field in lotform %}
+                <div class="col-md-2 mb-2 small">
+                    <label for="{{ field.id_for_label }}" class="form-label small">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+            {% endfor %}
         </div>
         <button type="submit" class="btn btn-primary">{{ action }}</button>
-        <a href="{% url 'lot_list' %}" class="btn btn-secondary">უკან</a>
+        <a href="{% url 'lot_list' %}" class="btn btn-secondary">პარტიების სია</a>
+        {% if lotform.instance.lot_id %}
+            <a href="{% url 'lot_stone_totals' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-info">ქვების ჯამები</a>
+            <a href="{% url 'transaction_create' 'ჩამოსხმა' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-warning">ჩამოსხმა</a>
+            <a href="{% url 'transaction_create' 'დამუშავება' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-success">დამუშავება</a>
+            <a href="{% url 'auto_salary' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-danger">AUTO ხელფასი</a>
+            <a href="{% url 'transaction_create' 'ლოტის გატარება' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-info">სხვა გატარება</a>
+
+        {% endif %}
     </form>
 
     <hr>
@@ -64,9 +77,27 @@
                                     <td>{{ stone.stone_full_name }}</td>
                                     <td>{{ stone.total_weight }}</td>
                                     <td>{{ stone.quantity }}</td>
-                                    <td>{{ stone.cost_piece }}</td>
-                                    <td>{{ stone.cost_manufacturing_piece }}</td>
-                                    <td>{{ stone.margin_piece }}</td>
+                                    <td>
+                                        {% if stone.cost_piece >= 0 %}
+                                            {{ stone.cost_piece }}
+                                        {% else %}
+                                            <a href="{% url 'lot_model_stone_default_update' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'cost_piece' %}" class="btn btn-sm btn-warning">{{ stone.cost_piece }}</a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if stone.cost_manufacturing_stone >= 0 %}
+                                            {{ stone.cost_manufacturing_stone }}
+                                        {% else %}
+                                            <a href="{% url 'lot_model_stone_default_update' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'cost_manufacturing_stone' %}" class="btn btn-sm btn-warning">{{ stone.cost_manufacturing_stone }}</a>
+                                        {% endif %}
+                                    </td>
+                                  <td>
+                                        {% if stone.margin_stones >= 0 %}
+                                            {{ stone.margin_stones }}
+                                        {% else %}
+                                            <a href="{% url 'lot_model_stone_default_update' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'margin_stones' %}" class="btn btn-sm btn-warning">{{ stone.margin_stones }}</a>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ stone.price }}</td>
                                     <td>
                                         <a href="{% url 'lot_model_stone_change' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name %}" class="btn btn-sm btn-secondary">შც</a>

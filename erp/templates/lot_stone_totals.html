@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load custom_tags %}
+    <td><a class="btn btn-sm btn-secondary" href="{{ next_url }}" title="უკან">უკან</a></td>
+    {% for header_table in summary_tables %}
+        <br>
+        {% for header, table in header_table.items %}
+            <center><h3>{{ header }}</h3></center>
+            <br>
+                <table class="table table-striped table-hover table-sm">
+                    <tbody>
+                        {% for row in table  %}
+                            {% if row.err == 'Err' %}
+                                <tr class="table-danger">
+                                    {% for name, item in row.items %}
+                                        {% if item == 'NA' or item|is_nan %}
+                                            {% if name == 'weight_unit' %}
+                                                <td><a class="btn btn-sm btn-warning" href="{% url 'admin:erp_stones_changelist' %}?next={{ request.path|urlencode }}" title="გასწორება">{{ item }}</a></td>
+                                            {% endif %}
+                                            {% if name == 'cost_piece' %}
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_piece' %}?next={{ next_url }}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
+                                            {% endif %}
+                                            {% if name == 'cost_manufacturing_stone' %}
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_manufacturing_stone' %}?next={{ next_url }}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
+                                            {% endif %}
+                                            {% if name == 'margin_stones' %}
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'margin_stones' %}?next={{ next_url }}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
+                                            {% endif %}
+                                        {% else %}
+                                            <td>{{ item }}</td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    {% for item in row %}
+                                        <td>{{ item }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endfor %}
+    {% endfor %}
+    <ul>Err ნიშნავს
+        <li>საწყობში არ არის საკმარისი რაოდენობა</li>
+        <li>ფასები არ არის შეყვანილი სრულად</li>
+        <li>არ ემთხვევა ერთეული</li>
+
+    </ul>
+{% endblock %}

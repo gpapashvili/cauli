@@ -4,10 +4,11 @@
 <div class="container mt-4">
     <h2>დარწმუნებული ხარ რომ გინდა წაშალო {{ transaction.tmstmp }} {{ transaction.item }}-ის ტრანზაქციის ჩანაწერი?</h2>
     <br>
+{#    <form method="post" action="{% url 'transaction_delete' transaction.tmstmp transaction.item %}?next={{ next_url }}>#}
     <form method="post">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">დიახ</button>
-        <a href="{% url 'transaction_type' transaction.transaction_type %}" class="btn btn-secondary">არა</a>
+        <a href="{{ next_url }}" class="btn btn-secondary">არა</a>
     </form>
 </div>
 {% endblock %}

@@ -1,3 +1,5 @@
+from importlib.metadata import requires
+
 from django import forms
 from .models import *
 
@@ -110,16 +112,24 @@ class LotForm(forms.ModelForm):
             'lot_date',
             'metal_full_name',
             'master',
+            'note',
             'cost_manufacturing_stone',
             'margin_stones',
-            'note'
+            'cost_grinding',
+            'cost_polishing',
+            'cost_plating',
+            'cost_sinji',
         ]
         widgets = {
             'lot_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'lot_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'metal_full_name': forms.Select(attrs={'class': 'form-control'}),
             'master': forms.Select(attrs={'class': 'form-control'}),
+            'cost_grinding': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
             'cost_manufacturing_stone': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
+            'cost_polishing': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
+            'cost_plating': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
+            'cost_sinji': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
             'margin_stones': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
             'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
         }
@@ -128,8 +138,12 @@ class LotForm(forms.ModelForm):
             'lot_date': 'თარიღი',
             'metal_full_name': 'მეტალი',
             'master': 'მასტერი',
-            'cost_manufacturing_stone': 'ქვის ჩასმა',
-            'margin_stones': 'მოგება ქვაზე',
+            'cost_grinding': 'დამუშავება',
+            'cost_manufacturing_stone': 'ქვის.ჩასმა',
+            'cost_polishing': 'გაპრიალება',
+            'cost_plating': 'როდირება',
+            'cost_sinji': 'სინჯი',
+            'margin_stones': 'მოგება.ქვაზე',
             'note': 'კომენტარი'
         }
 
@@ -170,46 +184,33 @@ class LotModelStonesForm(forms.ModelForm):
             'stone_full_name',
             'quantity',
             'cost_piece',
-            'cost_manufacturing_piece',
-            'margin_piece',
+            'cost_manufacturing_stone',
+            'margin_stones',
             'note',
         ]
         widgets = {
             'stone_full_name': forms.Select(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
             'cost_piece': forms.NumberInput(attrs={'class': 'form-control'}),
-            'cost_manufacturing_piece': forms.NumberInput(attrs={'class': 'form-control'}),
-            'margin_piece': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cost_manufacturing_stone': forms.NumberInput(attrs={'class': 'form-control'}),
+            'margin_stones': forms.NumberInput(attrs={'class': 'form-control'}),
             'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
         }
         labels = {
             'stone_full_name': 'ქვის სახელი და ზომა',
             'quantity': 'ქვების რაოდენობა მოდელში',
             'cost_piece': 'ქვის ღირებულება',
-            'cost_manufacturing_piece': 'ჩასმის ფასი',
-            'margin_piece': 'მოგება',
+            'cost_manufacturing_stone': 'ჩასმის ფასი',
+            'margin_stones': 'მოგება',
             'note': 'კომენტარი'
         }
 
 
 class AddTransactionForm(forms.ModelForm):
 
-    item = forms.ChoiceField(
-        choices=lambda: [('', '-----------')] +
-                        [('', '---ქვები---')] +
-                        sorted([(s.stone_full_name, s.stone_full_name) for s in Stones.objects.all()]) +
-                        [('', '---მეტალები---')] +
-                        sorted([(m.metal_full_name, m.metal_full_name) for m in Metals.objects.all()]) +
-                        [('', '---სხვა---')] +
-                        sorted([(ms.label, ms.label) for ms in MaterialsServices.objects.all()]),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='მასალა/მომსახურება'
-                            )
-
     class Meta:
         model = Transactions
         fields = [
-            'tmstmp',
             'transaction_type',
             'lot_id',
             'item',
@@ -221,24 +222,26 @@ class AddTransactionForm(forms.ModelForm):
             'pieces',
             'stone_quality',
             'image_location',
+            'tmstmp',
             'note',
         ]
-
         widgets = {
+            'item': forms.Select(attrs={'class': 'form-control'}),
             'tmstmp': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
             'item_type': forms.Select(attrs={'class': 'form-control'}),
             'transaction_type': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
             'lot_id': forms.Select(attrs={'class': 'form-control'}),
-            'transaction_quantity': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
+            'transaction_quantity': forms.NumberInput(attrs={'class': 'form-control', 'size': 2, 'oninput': 'calculateTotalCost()', 'id':'transaction_quantity', }),
             'transaction_quantity_unit': forms.Select(attrs={'class': 'form-control'}),
-            'pieces': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
+            'pieces': forms.NumberInput(attrs={'class': 'form-control', 'size': 2, 'oninput': 'calculatePiecePrice()', 'id':'pieces', }),
             'stone_quality': forms.Select(attrs={'class': 'form-control'}),
-            'cost_unit': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
+            'cost_unit': forms.NumberInput(attrs={'class': 'form-control', 'size': 2, 'oninput': 'calculateTotalCost()', 'id':'cost_unit', }),
             'image_location': forms.FileInput(attrs={'class': 'form-control', 'size': 2}),
             'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
         labels = {
+            'item': 'აქტივი',
             'tmstmp': 'ტრანზაქციის დრო',
             'item_type': 'მასალის/მომსახურების ტიპი',
             'transaction_type': 'ტრანზაქციის ტიპი',
@@ -252,143 +255,3 @@ class AddTransactionForm(forms.ModelForm):
             'image_location': 'სურათი',
             'note': 'კომენტარი',
         }
-
-
-class AddSinjiTransactionForm(forms.ModelForm):
-
-    item = forms.ChoiceField(
-        choices=lambda: [('', '---მეტალები---')] +
-                        sorted([(m.metal_full_name, m.metal_full_name) for m in Metals.objects.all()]),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='აირჩიე მეტალი'
-                            )
-
-    transaction_type = forms.ModelChoiceField(
-        queryset=TransactionTypes.objects.filter(label='გადაყვანა'),
-        initial=TransactionTypes.objects.filter(label='გადაყვანა').first(),
-        widget=forms.HiddenInput(),
-        required=False,
-        label=''
-                                            )
-
-    item_type = forms.ModelChoiceField(
-        queryset=ItemTypes.objects.filter(label='მეტალი'),
-        initial=ItemTypes.objects.filter(label='მეტალი').first(),
-        widget=forms.HiddenInput(),
-        required=False,
-        label=''
-                                        )
-
-    transaction_quantity_unit = forms.ModelChoiceField(
-        queryset=Units.objects.filter(label='გრამი'),
-        initial=Units.objects.filter(label='გრამი').first(),
-        widget=forms.HiddenInput(),
-        required=False,
-        label=''
-                                                        )
-
-    class Meta:
-        model = Transactions
-        fields = [
-            'item',
-            'item_type',
-            'transaction_type',
-            'transaction_quantity',
-            'transaction_quantity_unit',
-            'cost_unit',
-            'description',
-            'note',
-        ]
-        widgets = {
-            'transaction_quantity': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
-            'cost_unit': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
-            'description': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
-            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-        labels = {
-            'transaction_quantity': 'რაოდენობა',
-            'cost_unit': 'ერთეულის ფასი',
-            'description': 'იდენტიფიკატორი',
-            'note': 'კომენტარი',
-        }
-
-
-class AddCastTransactionForm(forms.ModelForm):
-
-    item = forms.ChoiceField(
-        choices=lambda: [('', '-----------')] +
-                        [('', '---მეტალები---')] +
-                        sorted([(m.metal_full_name, m.metal_full_name) for m in Metals.objects.all()]) +
-                        [('', '---მეტალის დანაკარგები---')] +
-                        sorted([(m.metal_full_name + ' დანაკარგი', m.metal_full_name + ' დანაკარგი') for m in Metals.objects.all()]) +
-                        [('', '---სხვა---')] +
-                        [('ფული', 'ფული')] ,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='მეტალი/სხვა'
-                            )
-
-    transaction_type = forms.ModelChoiceField(
-        queryset=TransactionTypes.objects.filter(label='ჩამოსხმა'),
-        initial=TransactionTypes.objects.filter(label='ჩამოსხმა').first(),
-        widget=forms.HiddenInput(),
-        required=False,
-        label=''
-                                            )
-
-    class Meta:
-        model = Transactions
-        fields = [
-            'lot_id',
-            'item',
-            'item_type',
-            'transaction_quantity',
-            'transaction_quantity_unit',
-            'cost_unit',
-            'description',
-            'note',
-            'transaction_type',
-        ]
-        widgets = {
-            'lot_id': forms.Select(attrs={'class': 'form-control'}),
-            'item_type': forms.Select(attrs={'class': 'form-control'}),
-            'transaction_type': forms.Select(attrs={'class': 'form-control'}),
-            'transaction_quantity': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
-            'transaction_quantity_unit': forms.Select(attrs={'class': 'form-control'}),
-            'cost_unit': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
-            'description': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
-            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-        labels = {
-            'lot_id': 'პარტიის N',
-            'item_type': 'მეტალი ან ხელფასი',
-            'transaction_type': 'ტრანზაქციის ტიპი',
-            'transaction_quantity': 'რაოდენობა',
-            'transaction_quantity_unit': 'ერთეული',
-            'cost_unit': 'ერთეულის ფასი',
-            'description': 'იდენტიფიკატორი',
-            'note': 'კომენტარი',
-            'pieces': 'ცალობა',
-            'stone_quality': 'ხარისხი (ქვის)',
-            'image_location': 'სურათი',
-        }
-
-
-class AddProcTransactionForm(AddCastTransactionForm):
-
-    item = forms.ChoiceField(
-        choices=lambda: [('', '-----------')] +
-                        [('', '---მეტალები---')] +
-                        sorted([(m.metal_full_name, m.metal_full_name) for m in Metals.objects.all()]) +
-                        [('', '---სხვა---')] +
-                        sorted([(ms.label, ms.label) for ms in MaterialsServices.objects.all()]),
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='მასალა/მომსახურება'
-                            )
-
-    transaction_type = forms.ModelChoiceField(
-        queryset=TransactionTypes.objects.filter(label='დამუშავება'),
-        initial=TransactionTypes.objects.filter(label='დამუშავება').first(),
-        widget=forms.HiddenInput(),
-        required=False,
-        label=''
-                                            )

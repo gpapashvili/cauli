@@ -256,7 +256,11 @@ class Lots(models.Model):
     lot_date = models.DateField(default=now)
     metal_full_name = models.ForeignKey('Metals', models.DO_NOTHING, db_column='metal_full_name', to_field='metal_full_name', blank=True, null=True)
     master = models.ForeignKey('Masters', models.DO_NOTHING, db_column='master', to_field='label', blank=True, null=True)
+    cost_grinding = models.DecimalField(max_digits=10, decimal_places=2)
     cost_manufacturing_stone = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_polishing = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_plating = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_sinji = models.DecimalField(max_digits=10, decimal_places=2)
     margin_stones = models.DecimalField(max_digits=10, decimal_places=2)
     note = models.TextField(blank=True, null=True)
     total_lot_weight = 0
@@ -352,9 +356,9 @@ class LotModelStones(models.Model):
     weight = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
     weight_unit = models.ForeignKey('Units', models.DO_NOTHING, db_column='weight_unit', default='კარატი', related_name='lotmodelstone_weight_unit')
     cost_piece = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    cost_manufacturing_piece = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    margin_piece = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    price = models.GeneratedField(expression=ExpressionWrapper( (F('cost_piece') + F('cost_manufacturing_piece') + F('margin_piece')) * F('quantity'),
+    cost_manufacturing_stone = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    margin_stones = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    price = models.GeneratedField(expression=ExpressionWrapper( (F('cost_piece') + F('cost_manufacturing_stone') + F('margin_stones')) * F('quantity'),
                                                                 output_field=models.DecimalField(max_digits=10, decimal_places=2) ),
                                   output_field=models.DecimalField(max_digits=10, decimal_places=2),
                                   db_persist=True, blank=True, null=True )
@@ -381,7 +385,7 @@ class Transactions(models.Model):
         filename = f"{instance.tmstmp}_{instance.item}.{ext}"
         return f'transactions/{filename}'
 
-    tmstmp = models.CharField(primary_key=True, default=now_as_str)
+    tmstmp = models.CharField(default=now_as_str, blank=True, null=True)
     item = models.CharField()
     item_type = models.ForeignKey('ItemTypes', models.DO_NOTHING, db_column='item_type', related_name='transaction_item_type')
     transaction_type = models.ForeignKey('TransactionTypes', models.DO_NOTHING, db_column='transaction_type', related_name='transaction_transaction_type')
@@ -400,6 +404,7 @@ class Transactions(models.Model):
                                        output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
     image_location = models.ImageField(upload_to=image_path, null=True, blank=True)
     note = models.TextField(blank=True, null=True)
+    django_id = models.AutoField(primary_key=True)
 
     class Meta:
         managed = False

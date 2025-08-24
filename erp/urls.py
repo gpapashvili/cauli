@@ -31,14 +31,19 @@ urlpatterns = [
     path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_stone_add', views.lot_model_stone_add, name='lot_model_stone_add'),
     path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/model_stone_change', views.lot_model_stone_change, name='lot_model_stone_change'),
     path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/model_stone_delete', views.lot_model_stone_delete, name='lot_model_stone_delete'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/<str:field>/lot_model_stone_default_update', views.lot_model_stone_default_update, name='lot_model_stone_default_update'),
+    path('lot/<int:lot_id>/stone_totals/', views.lot_stone_totals, name='lot_stone_totals'),
 
 
     # transaction
     path('transaction_list/', views.transaction_list, name='transaction_list'),
     path('transaction_list/<str:transaction_type>/transaction_type/', views.transaction_list, name='transaction_type'),
-    path('transaction/<str:transaction_type>/create/', views.transaction_create, name='transaction_create'),
+    path('transaction/<str:transaction_identifier>/<int:lot_id>/create/', views.transaction_create, name='transaction_create'),
+    # TODO: lot_transactions
+    path('transaction/<str:transaction_identifier>/<int:lot_id>/create/', views.transaction_create, name='lot_transactions'),
     path('transaction/<str:tmstmp>/<str:item>/update/', views.transaction_update, name='transaction_update'),
     path('transaction/<str:tmstmp>/<str:item>/delete', views.transaction_delete, name='transaction_delete'),
+    path('transaction/<int:lot_id>/auto_salary', views.auto_salary, name='auto_salary'),
 
     # other
     path('', views.home, name='home'),
