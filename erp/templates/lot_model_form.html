@@ -3,9 +3,11 @@
 {% block content %}
 <div class="container mt-4">
     {% if action == 'დამატება' %}
-    <h2>{{ form.lot_id.value }} პარტიაში ახალი მოდელის {{ action }} </h2>
+        <h2>{{ form.lot_id.value }} პარტიაში ახალი მოდელის {{ action }} </h2>
+    {% elif action == 'გაყიდვა' %}
+        <h2>პარტია N {{ form.lot_id.value }}-ში {{ form.model_id.value }} მოდელის {{ action }} </h2>
     {% else %}
-    <h2>პარტია N {{ form.lot_id.value }}-ში {{ form.model_id.value }} მოდელზე ინფორმაციის {{ action }} </h2>
+        <h2>პარტია N {{ form.lot_id.value }}-ში {{ form.model_id.value }} მოდელზე ინფორმაციის {{ action }} </h2>
     {% endif %}
 
     <form method="post" enctype="multipart/form-data">
@@ -14,7 +16,7 @@
         <div class="mb-2 d-flex gap-2">
            <div class="mb-1 ">
                <br>
-               <img src="/media/{{ image_location }}" alt="უსურათო" width="200" height="200">
+               <img src="/media/{{ form.instance.image_location }}" alt="უსურათო" width="200" height="200">
                <br><br>
                <button type="submit" class="btn btn-primary">{{ action }}</button>
                <a href="{% url 'lot_update' form.lot_id.value %}" class="btn btn-secondary">უკან</a>

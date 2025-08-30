@@ -5,9 +5,10 @@
     <h2 class="align-middle text-center">{{ transaction_type }}</h2>
     <br>
     <a href="{% url 'transaction_create' 'ნებისმიერი' 0 %}?next={{ request.path|urlencode }}" class="btn btn-primary mb-3">ნებისმიერი გატარება</a>
-    <a href="{% url 'transaction_create' 'გადაყვანა' 0 %}?next={{ request.path|urlencode }}" class="btn btn-warning mb-3">გადაყვანის გატარება</a>
     <a href="{% url 'transaction_create' 'ქვის_შესყიდვა' 0 %}?next={{ request.path|urlencode }}" class="btn btn-info mb-3">ქვის შესყიდვა</a>
     <a href="{% url 'transaction_create' 'მეტალის_შესყიდვა' 0 %}?next={{ request.path|urlencode }}" class="btn btn-success mb-3">მეტალის შესყიდვა</a>
+    <a href="{% url 'transaction_create' 'გადაყვანა' 0 %}?next={{ request.path|urlencode }}" class="btn btn-warning mb-3">გადაყვანის გატარება</a>
+    <a href="{% url 'transaction_create' 'გაყიდვა' 0 %}?next={{ request.path|urlencode }}" class="btn btn-danger mb-3">პროდუქციის გაყიდვა</a>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3 d-flex gap-2">

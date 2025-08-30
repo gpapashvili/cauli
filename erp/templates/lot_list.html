@@ -53,7 +53,7 @@
                     <div class="mb-3">
                         <a href="{% url 'lot_stone_totals' lot.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-info">ქვების ჯამი</a>
                         <br>
-                        <a href="{% url 'transaction_create' 'ლოტის გატარება' lot.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-success">გატარებები</a>
+                        <a href="{% url 'transaction_create' 'ლლოტის_გატარება' lot.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-success">გატარებები</a>
                         <br>
                         <a href="{% url 'lot_delete' lot.lot_id %}" class="btn btn-sm btn-danger">პარტიის წაშლა</a>
                     </div>

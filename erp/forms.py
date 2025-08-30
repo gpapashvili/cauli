@@ -119,6 +119,7 @@ class LotForm(forms.ModelForm):
             'cost_polishing',
             'cost_plating',
             'cost_sinji',
+            'price_gram_gold',
         ]
         widgets = {
             'lot_id': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -131,6 +132,7 @@ class LotForm(forms.ModelForm):
             'cost_plating': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
             'cost_sinji': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
             'margin_stones': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
+            'price_gram_gold': forms.NumberInput(attrs={'class': 'form-control', 'size': 2}),
             'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
         }
         labels = {
@@ -144,6 +146,7 @@ class LotForm(forms.ModelForm):
             'cost_plating': 'როდირება',
             'cost_sinji': 'სინჯი',
             'margin_stones': 'მოგება.ქვაზე',
+            'price_gram_gold': 'გრამის გასაყიდი ფასი',
             'note': 'კომენტარი'
         }
 
@@ -152,27 +155,36 @@ class LotModelsForm(forms.ModelForm):
     class Meta:
         model = LotModels
         fields = [
-            'sold',
             'lot_id',
             'model_id',
             'tmstmp',
             'weight',
+            'customer',
+            'location',
+            'cost_gram_gold',
+            'price_gram_gold',
             'note',
         ]
         widgets = {
-            'sold': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'lot_id': forms.Select(attrs={'class': 'form-control'}),
             'model_id': forms.Select(attrs={'class': 'form-control'}),
             'tmstmp': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'weight': forms.NumberInput(attrs={'class': 'form-control'}),
+            'customer': forms.Select(attrs={'class': 'form-control'}),
+            'location': forms.Select(attrs={'class': 'form-control'}),
+            'cost_gram_gold': forms.NumberInput(attrs={'class': 'form-control'}),
+            'price_gram_gold': forms.NumberInput(attrs={'class': 'form-control'}),
             'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
         labels = {
-            'sold': 'გაყიდული',
             'lot_id': 'პარტიის ნომერი',
             'model_id': 'მოდელის ნომერი',
             'tmstmp': 'ტაგი დრო',
             'weight': 'ბეჭდის წონა',
+            'customer': 'მყიდველი',
+            'location': 'პროდუქტის მდებარეობა',
+            'cost_gram_gold': 'გრამის ღირებულება',
+            'price_gram_gold': 'გრამის გასაყიდი ფასი',
             'note': 'კომენტარი',
         }
 
@@ -208,11 +220,25 @@ class LotModelStonesForm(forms.ModelForm):
 
 class AddTransactionForm(forms.ModelForm):
 
+    item = forms.ChoiceField(
+        choices=lambda: [('', '-----------')] +
+                        [('', '---ქვები---')] +
+                        sorted([(s.stone_full_name, s.stone_full_name) for s in Stones.objects.all()]) +
+                        [('', '---მეტალები---')] +
+                        sorted([(m.metal_full_name, m.metal_full_name) for m in Metals.objects.all()]) +
+                        sorted([(f'{m.metal_full_name} დანაკარგი', f'{m.metal_full_name} დანაკარგი') for m in Metals.objects.all()]) +
+                        [('', '---სხვა---')] +
+                        sorted([(ms.label, ms.label) for ms in MaterialsServices.objects.all()]),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='აქტივი'
+                            )
+
     class Meta:
         model = Transactions
         fields = [
             'transaction_type',
             'lot_id',
+            'customer',
             'item',
             'item_type',
             'transaction_quantity',
@@ -232,6 +258,7 @@ class AddTransactionForm(forms.ModelForm):
             'transaction_type': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
             'lot_id': forms.Select(attrs={'class': 'form-control'}),
+            'customer': forms.Select(attrs={'class': 'form-control'}),
             'transaction_quantity': forms.NumberInput(attrs={'class': 'form-control', 'size': 2, 'oninput': 'calculateTotalCost()', 'id':'transaction_quantity', }),
             'transaction_quantity_unit': forms.Select(attrs={'class': 'form-control'}),
             'pieces': forms.NumberInput(attrs={'class': 'form-control', 'size': 2, 'oninput': 'calculatePiecePrice()', 'id':'pieces', }),
@@ -247,6 +274,7 @@ class AddTransactionForm(forms.ModelForm):
             'transaction_type': 'ტრანზაქციის ტიპი',
             'description': 'იდენტიფიკატორი',
             'lot_id': 'პარტიის N',
+            'customer': 'კლიენტი',
             'transaction_quantity': 'რაოდენობა',
             'transaction_quantity_unit': 'ერთეული',
             'pieces': 'ცალობა',

@@ -19,13 +19,13 @@
                                                 <td><a class="btn btn-sm btn-warning" href="{% url 'admin:erp_stones_changelist' %}?next={{ request.path|urlencode }}" title="გასწორება">{{ item }}</a></td>
                                             {% endif %}
                                             {% if name == 'cost_piece' %}
-                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_piece' %}?next={{ next_url }}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_piece' %}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
                                             {% endif %}
                                             {% if name == 'cost_manufacturing_stone' %}
-                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_manufacturing_stone' %}?next={{ next_url }}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_manufacturing_stone' %}" title="ყველას შევსება">{{ item }}</a></td>
                                             {% endif %}
                                             {% if name == 'margin_stones' %}
-                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'margin_stones' %}?next={{ next_url }}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'margin_stones' %}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
                                             {% endif %}
                                         {% else %}
                                             <td>{{ item }}</td>
@@ -44,10 +44,9 @@
                 </table>
             {% endfor %}
     {% endfor %}
-    <ul>Err ნიშნავს
+    <ul><span style="background-color: yellow; color: black">Err ნიშნავს</span>
         <li>საწყობში არ არის საკმარისი რაოდენობა</li>
         <li>ფასები არ არის შეყვანილი სრულად</li>
         <li>არ ემთხვევა ერთეული</li>
-
     </ul>
 {% endblock %}

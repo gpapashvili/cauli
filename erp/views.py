@@ -170,14 +170,14 @@ def model_stone_add(request, model_id):
 from .models import CatalogStones
 def model_stone_delete(request, model_id, stone_full_name):
 
-    catalogstones = get_object_or_404(CatalogStones, model_id=model_id, stone_full_name=stone_full_name)
+    stone = get_object_or_404(CatalogStones, model_id=model_id, stone_full_name=stone_full_name)
 
     if request.method == 'POST':
-        catalogstones.delete()
+        stone.delete()
         messages.success(request, 'მოდელზე ქვა წარმატებით წაშლილია.')
         return redirect('catalog')
 
-    return render(request, 'model_stone_delete.html', {'catalogstones': catalogstones})
+    return render(request, 'stone_delete.html', {'stone': stone})
 
 
 from .utils import insert_query
@@ -232,35 +232,42 @@ def lot_create(request):
 
 
 def lot_update(request, lot_id):
+
     login_db(request)
+    lot_models = pd_query(f'SELECT * FROM lot_update_models WHERE lot_id = {lot_id}', POSTGRESQL_ENGINE)
+    for lot_model in lot_models:
+        lot_model['lot_stones'] = pd_query(f"""SELECT * FROM lot_update_stones WHERE tmstmp = '{lot_model.tmstmp}'""", POSTGRESQL_ENGINE)
+
+    # totals for header
+    lot_model_totals = pd.Series()
+    lot_model_totals_temp = pd.DataFrame(lot_models)
+    lot_model_totals['count'] = lot_model_totals_temp['model_id'].count()
+    lot_model_totals['unique'] = len(lot_model_totals_temp['model_id'].unique())
+    lot_model_totals['sold'] = lot_model_totals_temp['sold'].sum()
+    lot_model_totals['weight'] = lot_model_totals_temp['weight'].sum()
+    lot_model_totals['cost_gram_gold'] = lot_model_totals_temp['cost_gram_gold'].mean()
+    lot_model_totals['price_gram_gold'] = lot_model_totals_temp['price_gram_gold'].mean()
+    lot_model_totals['model_total_stone_weight'] = lot_model_totals_temp['model_total_stone_weight'].sum()
+    lot_model_totals['model_total_stone_quantity'] = lot_model_totals_temp['model_total_stone_quantity'].sum()
+    lot_model_totals['model_total_stone_cost_piece'] = lot_model_totals_temp['model_total_stone_cost_piece'].sum()
+    lot_model_totals['model_total_stone_cost_manufacturing_stone'] = lot_model_totals_temp['model_total_stone_cost_manufacturing_stone'].sum()
+    lot_model_totals['model_total_stone_margin_stones'] = lot_model_totals_temp['model_total_stone_margin_stones'].sum()
+    lot_model_totals['model_total_cost'] = lot_model_totals_temp['model_total_cost'].sum()
+    lot_model_totals['model_total_price'] = lot_model_totals_temp['model_total_price'].sum()
+    lot_model_totals['model_profit'] = lot_model_totals_temp['model_profit'].sum()
+
     lot = get_object_or_404(Lots, lot_id=lot_id)
-
-    stat = f"""SELECT c.image_location, lm.model_id, lm.tmstmp, lm.sold, lm.weight
-               FROM lot_models AS lm
-                LEFT JOIN catalog AS c ON lm.model_id = c.model_id
-               WHERE lm.lot_id = {lot_id}
-               ORDER BY lm.sold, lm.model_id"""
-    lot_models = pd_query(stat, POSTGRESQL_ENGINE)
-
-    stat = f"""SELECT lms.model_id, lms.stone_full_name, lms.quantity, lms.weight, lms.tmstmp,
-                    lms.cost_piece, lms.cost_manufacturing_stone, lms.margin_stones, lms.price,
-                    lms.quantity * lms.weight AS total_weight,
-                    lms.quantity * ( lms.cost_piece + lms.cost_manufacturing_stone + lms.margin_stones ) AS total_price
-               FROM lot_model_stones AS lms
-               WHERE lms.lot_id = {lot_id}
-               ORDER BY lms.stone_full_name"""
-    lot_stones = pd_query(stat, POSTGRESQL_ENGINE)
 
     if request.method == 'POST':
         lotform = LotForm(request.POST, instance=lot)
         if lotform.is_valid():
             lotform.save()
             messages.success(request, 'პარტიაზე ინფორმაცია წარმატებით განახლდა.')
-            return redirect('lot_list')
+            return redirect('lot_update', lot_id=lot_id)
     else:
         lotform = LotForm(instance=lot)
 
-    return render(request, 'lot_form.html', {'lotform': lotform, 'action': 'დაიმახსოვრე', 'lot_models':lot_models, 'lot_stones':lot_stones})
+    return render(request, 'lot_form.html', {'lotform': lotform, 'action': 'დაიმახსოვრე', 'lot_models':lot_models, 'lot_model_totals':lot_model_totals})
 
 
 def lot_delete(request, lot_id):
@@ -276,8 +283,11 @@ from .forms import LotModelsForm
 def lot_model_update(request, lot_id, model_id, tmstmp):
 
     lotmodel = get_object_or_404(LotModels, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp)
-    image_location = get_object_or_404(Catalog, model_id=model_id).image_location
+    hidden_fields = ['lot_id', 'model_id', 'tmstmp']
     form = LotModelsForm(instance=lotmodel)
+    for field in hidden_fields:
+        form.fields[field].widget = forms.HiddenInput()
+        form.fields[field].label = ''
 
     if request.method == 'POST':
         form = LotModelsForm(request.POST, instance=lotmodel)
@@ -287,15 +297,30 @@ def lot_model_update(request, lot_id, model_id, tmstmp):
             return redirect('lot_update', lot_id=lot_id)
         else:
             messages.error(request, 'პრობლემა ინფორმაციის განახლებისას!')
-    return render(request, 'lot_model_form.html', {'form': form, 'action': 'განახლება', 'image_location': image_location})
+    return render(request, 'lot_model_form.html', {'form': form, 'action': 'განახლება'})
 
 
-def lot_model_sold(request, lot_id, model_id, tmstmp, sold):
+def lot_model_sold(request, lot_id, model_id, tmstmp):
+
+    # TODO: customer choose form
 
     lotmodel = get_object_or_404(LotModels, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp)
-    lotmodel.sold = sold
-    lotmodel.save()
-    return redirect('lot_update', lot_id=lot_id)
+    hidden_fields = ['weight', 'cost_gram_gold', 'lot_id', 'model_id', 'tmstmp']
+    initial = {'location': 'გაყიდული' }
+    form = LotModelsForm(instance=lotmodel, initial=initial)
+    for field in hidden_fields:
+        form.fields[field].widget = forms.HiddenInput()
+        form.fields[field].label = ''
+
+    if request.method == 'POST':
+        form = LotModelsForm(request.POST, instance=lotmodel)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'მოდელი გაიყიდა.')
+            return redirect('lot_update', lot_id=lot_id)
+        else:
+            messages.error(request, 'პრობლემა ინფორმაციის განახლებისას!')
+    return render(request, 'lot_model_form.html', {'form': form, 'action': 'გაყიდვა'})
 
 
 from .models import LotModels
@@ -380,48 +405,76 @@ def lot_model_stone_change(request, lot_id, model_id, tmstmp, stone_full_name):
 from .models import LotModelStones
 def lot_model_stone_delete(request, lot_id, model_id, tmstmp, stone_full_name):
 
-    lotmodelstone = get_object_or_404(LotModelStones, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp, stone_full_name=stone_full_name)
+    stone = get_object_or_404(LotModelStones, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp, stone_full_name=stone_full_name)
 
     if request.method == 'POST':
-        lotmodelstone.delete()
+        stone.delete()
         messages.success(request, f'პარტია {lot_id}-ში მოდელ {model_id}-ზე წაიშალა {stone_full_name} !')
         return redirect('lot_update', lot_id=lot_id)
 
-    return render(request, 'lot_model_stone_delete.html', {'lotmodelstone': lotmodelstone})
+    return render(request, 'stone_delete.html', {'stone': stone})
 
-
-def lot_model_stone_default_update(request, lot_id, model_id, tmstmp, stone_full_name, field):
+def lot_model_cost_default_update(request, lot_id, model_id, tmstmp, field):
+    """Using SQL query to update cost and price fields with default value"""
 
     login_db(request)
     message = 'ოპერაცია წარმატებით დასრულდა'
 
+    # generate where clause for query. 'all' will be translated to field filter absence that will update all fields
+    where = f""" WHERE {field} IS NULL AND lot_id = {lot_id} """
+    where += "" if model_id == 'all' else f""" AND model_id = '{model_id}' """
+    where += "" if tmstmp == 'all' else f""" AND tmstmp = '{tmstmp}' """
+
+    # generate query based on field variable
+    if field == 'cost_gram_gold':
+        # if there is value in cost_calculation_per_lot view's cost_per_gram field for lot
+        cost_gram_gold = django_sql(f"""SELECT cost_per_gram FROM cost_calculation_per_lot WHERE lot_id = {lot_id}""")[0][0]
+        if cost_gram_gold:
+            stat =f"""UPDATE lot_models SET cost_gram_gold = {cost_gram_gold} {where} """
+            crt_query(stat, POSTGRESQL_ENGINE)
+        else:
+            message = 'ოქროს თვითღირებულება არ არის დაანგარიშებული'
+    elif field == 'price_gram_gold':
+        stat =f"""UPDATE lot_models SET price_gram_gold = (SELECT price_gram_gold FROM lots WHERE lot_id = {lot_id}) {where}"""
+        crt_query(stat, POSTGRESQL_ENGINE)
+
+    messages.success(request, message)
+    # redirect to next or lot_updates
+    redirect_url = request.GET.get('next', f'/lot/{lot_id}/update/')
+    return redirect(redirect_url)
+
+
+from .models import CatalogStones
+def lot_model_stone_default_update(request, lot_id, model_id, tmstmp, stone_full_name, field):
+    """Using SQL query to update field with default value"""
+
+    login_db(request)
+    message = 'ოპერაცია წარმატებით დასრულდა'
+
+    # generate where clause for query. 'all' will be translated to field filter absence that will update all fields
     where = f""" WHERE {field} IS NULL AND lot_id = {lot_id} """
     where += "" if model_id == 'all' else f""" AND model_id = '{model_id}' """
     where += "" if tmstmp == 'all' else f""" AND tmstmp = '{tmstmp}' """
     where += "" if stone_full_name == 'all' else f""" AND stone_full_name = '{stone_full_name}' """
 
+    # generate query based on field variable
     if field == 'cost_piece':
-        stat = f"""SELECT * FROM transactions WHERE item = '{stone_full_name}'"""
-        if pd_query(stat, POSTGRESQL_ENGINE):
-            stat =f"""UPDATE lot_model_stones SET cost_piece = (SELECT MAX( cost_piece ) FROM transactions
-                                                                WHERE tmstmp > to_char(CURRENT_TIMESTAMP - '6 months'::INTERVAL, 'YY-MM-DD-HH24-MI-SS')
-                                                                AND item = '{stone_full_name}' GROUP BY item LIMIT 1) 
-                      {where} """
+        # if there is stone purchase for last 6 month update price else change message content
+        cost_piece = django_sql(f"""SELECT MAX( cost_piece ) FROM transactions 
+                                        WHERE tmstmp > to_char(CURRENT_TIMESTAMP - '6 months'::INTERVAL, 'YY-MM-DD-HH24-MI-SS')
+                                        AND item = '{stone_full_name}' GROUP BY item LIMIT 1""")
+        if cost_piece:
+            stat =f"""UPDATE lot_model_stones SET cost_piece = {cost_piece[0][0]} {where} """
             crt_query(stat, POSTGRESQL_ENGINE)
         else:
             message = f'{stone_full_name} არ არის ნაყიდი'
     elif field in ('cost_manufacturing_stone', 'margin_stones'):
-        stat =f"""UPDATE lot_model_stones SET {field} = (SELECT {field} FROM lots
-                                                         WHERE lot_id = {lot_id} LIMIT 1)
-                  {where}"""
+        stat =f"""UPDATE lot_model_stones SET {field} = (SELECT {field} FROM lots WHERE lot_id = {lot_id} LIMIT 1) {where}"""
         crt_query(stat, POSTGRESQL_ENGINE)
 
     messages.success(request, message)
-
-    # TODO: It Works implement in other views
-    next_url = request.GET.get('next') or request.POST.get('next') or '/lot/'
-    redirect_url = reverse('lot_stone_totals', kwargs={'lot_id': lot_id})
-    redirect_url += f'?next={next_url}'
+    # redirect to next or stone_totals
+    redirect_url = request.GET.get('next', f'/lot/{lot_id}/stone_totals/')
     return redirect(redirect_url)
 
 
@@ -430,7 +483,6 @@ def lot_stone_totals(request, lot_id=0):
     # TODO: do next_url for all other pages too
     next_url = request.GET.get('next')
 
-    # TODO:
     login_db(request)
 
     summary_tables = []
@@ -446,9 +498,9 @@ def lot_stone_totals(request, lot_id=0):
 
     header = 'პარტიაში სულ ქვების დაჯამებული სია'
     table = [pd.Series({'err': '!!!', 'lot_id': 'პარტ.', 'stone_full_name': 'ქვა', 'quantity': 'საჭირო რაოდ.', 'pieces': 'საწყობში',
-                         'weight': 'საჭირო წონა', 'weight_unit': 'ერთ.', 'transaction_quantity': 'საწყობში წონა', 'transaction_quantity_unit': 'ერთ.',
-                         'cost_piece': 'ქვების ღირ.', 'avg_cost_piece': '1ც. საშ. ფასი', 'cost_manufacturing_stone': 'ჩასმის ღირ.', 'total_cost': 'სულ თვითღირ.',
-                         'margin_stones': 'მოგება', 'price': 'ქვების გასაყ ფასი', })]
+                         'total_weight': 'საჭირო წონა', 'weight_unit': 'ერთ.', 'transaction_quantity': 'საწყობში წონა', 'transaction_quantity_unit': 'ერთ.',
+                         'total_cost_piece': 'ქვების ღირ.', 'avg_cost_piece': '1ც. საშ. ფასი', 'total_cost_manufacturing_stone': 'ჩასმის ღირ.',
+                         'total_cost': 'სულ თვითღირ.', 'total_margin_stones': 'მოგება', 'total_price': 'ქვების გასაყ ფასი', })]
     stat = f"""SELECT * FROM lot_stone_totals WHERE {where_clause} ORDER BY err DESC, lot_id DESC, stone_full_name"""
     table.extend(pd_query(stat, POSTGRESQL_ENGINE))
     summary_tables.append({header: table})
@@ -457,15 +509,27 @@ def lot_stone_totals(request, lot_id=0):
     table = [pd.Series({'err': '!!!', 'lot_id': 'პარტ.', 'model_id': 'მოდელი', 'stone_full_name': 'ქვა', 'quantity': 'რაოდ.',
                          'weight': 'საჭირო წონა', 'weight_unit': 'ერთ.', 'cost_piece': 'ქვების ღირ.',
                          'cost_manufacturing_stone': 'ჩასმის ღირ.', 'total_cost': 'სულ თვითღირ.', 'margin_stones': 'მოგება', 'price': 'ქვების გასაყ ფასი', })]
-    stat = f"""SELECT '' AS err, lot_id, model_id, stone_full_name, SUM(quantity), SUM(quantity * weight), weight_unit, SUM(quantity * cost_piece), 
-                    SUM(quantity * cost_manufacturing_stone), SUM(quantity * (cost_piece + cost_manufacturing_stone)) AS cost_piece, 
-                    SUM(quantity * margin_stones), SUM(quantity * price)
+    stat = f"""SELECT '' AS err, lot_id, model_id, stone_full_name, SUM(quantity), SUM(total_weight), weight_unit, SUM(total_cost_piece), 
+                    SUM(total_cost_manufacturing_stone), SUM(total_cost), SUM(total_margin_stones), SUM(total_price)
                FROM lot_model_stones WHERE {where_clause} GROUP BY lot_id , model_id , stone_full_name, weight_unit ORDER BY lot_id DESC , model_id , stone_full_name;"""
     table.extend(pd_query(stat, POSTGRESQL_ENGINE))
     summary_tables.append({header: table})
 
     return render(request, 'lot_stone_totals.html',{'summary_tables': summary_tables, 'next_url': next_url })
 
+
+# customers
+
+from .models import Customers
+def customer_list(request):
+    login_db(request)
+    customers = pd_query('SELECT * FROM customer_details;', POSTGRESQL_ENGINE)
+    return render(request, 'customer_list.html', {'customers': customers})
+
+
+def customer_details(request, full_name):
+    customers = Customers.objects.all()
+    return render(request, 'customer_form.html', {'customers': customers})
 
 # transactions
 
@@ -482,7 +546,7 @@ def transaction_list(request, transaction_type = 'ნებისმიერი
     # filter by transaction_type
     if transaction_type == 'ნებისმიერი':
         where = 'true'
-    elif transaction_type == 'ლოტის გატარება':
+    elif transaction_type == 'ლოტის_გატარება':
         where = f"lot_id > 0"
     else:
         where = f"transaction_type = '{transaction_type}'"
@@ -518,7 +582,7 @@ def transaction_list(request, transaction_type = 'ნებისმიერი
 
 from .forms import AddTransactionForm
 from django import forms
-from .models import MaterialsServices
+from .models import MaterialsServices, TransactionTypes
 def transaction_create(request, transaction_identifier='ნებისმიერი', lot_id=0):
 
     login_db(request)
@@ -555,7 +619,7 @@ def transaction_create(request, transaction_identifier='ნებისმიე
     header = 'გადაყვანები'
     table = [pd.Series( {'transaction_date': 'ბოლო 5 თარიღზე გადაყვანები', 'total_weight_in': 'სულ გადასაყვანად (გრამი)',
                          'total_weight_out': 'სულ გადაყვანილი (გრამი)', 'total_weight_lost': 'დანაკარგი (გრამი)',
-                         'cost_per_gram': 'გრამის ღირებულება'})]
+                         'total_cost_in': 'სულ გადასაყვანად (ლარი)', 'cost_per_gram': 'გრამის ღირებულება'})]
     stat = """SELECT * FROM total_sinji_per_date LIMIT 5"""
     table.extend(pd_query(stat, POSTGRESQL_ENGINE))
     summary_tables.append({header: table})
@@ -614,47 +678,73 @@ def transaction_create(request, transaction_identifier='ნებისმიე
         initial = {}
         hidden_fields = []
         metals = [['', '---მეტალები---']] + sorted([([o.metal_full_name] * 2) for o in Metals.objects.all()])
-        # metal_lost = [['', '---მეტალის დანაკარგები---']] + sorted([([o.metal_full_name] * 2) for o in Metals.objects.all()])
     stones = [['', '---ქვები---']] + sorted([([o.stone_full_name] * 2) for o in Stones.objects.all()])
     other_items = [['', '---სხვა---']] + sorted([([o.label] * 2) for o in MaterialsServices.objects.all()])
 
+    if 'დამუშავება' in request.GET.get('next', ''):
+        transaction_type = 'დამუშავება'
+    elif 'ჩამოსხმა' in request.GET.get('next', ''):
+        transaction_type = 'ჩამოსხმა'
+    elif 'გადაყვანა' in request.GET.get('next', ''):
+        transaction_type = 'გადაყვანა'
+    else:
+        transaction_type = 'ნებისმიერი'
+    danshi = 'იდან' if 'აღება' in transaction_identifier else 'ში'
+
     match transaction_identifier:
         case 'გადაყვანა':
-            initial.update({'transaction_type': 'გადაყვანა', 'item_type': 'მეტალი', 'transaction_quantity_unit': 'გრამი'})
+            initial.update({'transaction_type': transaction_identifier, 'item_type': 'მეტალი', 'transaction_quantity_unit': 'გრამი'})
             item_choices = metals
             item_label = 'აირჩიე მეტალი'
             hidden_fields.extend(initial.keys())
             hidden_fields.extend(['lot_id', 'pieces', 'stone_quality', 'image_location'])
         case 'ქვის_შესყიდვა':
-            initial.update({'transaction_type': 'შესყიდვა', 'item_type': 'ქვა',})
+            transaction_type = 'შესყიდვა'
+            initial.update({'transaction_type': transaction_type, 'item_type': 'ქვა',})
             item_choices = stones
             item_label = 'აირჩიე ქვა'
             hidden_fields.extend(initial.keys())
             hidden_fields.extend(['lot_id'])
         case 'მეტალის_შესყიდვა':
-            initial.update({'transaction_type': 'გადაყვანა', 'item_type': 'მეტალი', 'transaction_quantity_unit': 'გრამი'})
+            transaction_type = 'შესყიდვა'
+            initial.update({'transaction_type': transaction_type, 'item_type': 'მეტალი', 'transaction_quantity_unit': 'გრამი'})
             item_choices = metals
             item_label = 'აირჩიე მეტალი'
             hidden_fields.extend(initial.keys())
             hidden_fields.extend(['lot_id', 'pieces', 'stone_quality', 'image_location'])
+        case 'გაყიდვა':
+            transaction_type = 'გაყიდვა'
+            initial.update({'transaction_type': transaction_type, 'item': 'ფული', 'item_type': 'შემოსავალი',
+                            'transaction_quantity_unit': 'ლარი', 'cost_unit': 1, })
+            item_choices =  other_items + metals + stones
+            item_label = 'ფული'
+            hidden_fields.extend(initial.keys())
+            hidden_fields.extend(['lot_id', 'pieces', 'stone_quality', 'image_location', ])
         case 'ჩამოსხმა' | 'დამუშავება':
-            initial.update({'lot_id': lot_id, 'transaction_type': 'ჩამოსხმა'})
+            initial.update({'lot_id': lot_id, 'transaction_type': transaction_identifier})
             item_choices = metals + metal_lost + other_items
             item_label = 'აირჩიე მეტალი/მეტალის დანაკარგი/ფული'
             hidden_fields.extend(initial.keys())
             hidden_fields.extend(['pieces', 'stone_quality', 'image_location'])
-        case 'მეტალის_აღება' | 'მეტალის_დაბრუნება':
-            initial.update({'lot_id': lot_id, 'transaction_type': 'დამუშავება' if 'დამუშავება' in request.GET.get('next', 'დამუშავება') else 'ჩამოსხმა',
-                            'item': metal_full_name, 'item_type': 'მეტალი',
-                            'transaction_quantity_unit': 'გრამი',
-                            'description': ' '.join([str(metal_full_name), transaction_identifier.split('_')[1],
-                                                     ' საწყობიდან' if transaction_identifier == 'მეტალის_აღება' else ' საწყობში' ] ) } )
-            item_choices = metals
-            item_label = 'აირჩიე მეტალი'
-            hidden_fields.extend(initial.keys())
-            hidden_fields.extend(['pieces', 'stone_quality', 'image_location'])
+        case 'მეტალის_აღება' | 'მეტალის_დაბრუნება' :
+            if lot_id:
+                initial.update({'lot_id': lot_id, 'transaction_type': transaction_type,
+                                'item': metal_full_name, 'item_type': 'მეტალი',
+                                'transaction_quantity_unit': 'გრამი',
+                                'description': f"""{transaction_identifier.split('_')[1]} საწყობ{danshi}""" } )
+                item_choices = metals
+                item_label = 'აირჩიე მეტალი'
+                hidden_fields.extend(initial.keys())
+                hidden_fields.extend(['pieces', 'stone_quality', 'image_location'])
+            else:
+                initial.update({'transaction_type': transaction_type, 'item_type': 'მეტალი', 'transaction_quantity_unit': 'გრამი',
+                                'description': f"""{transaction_identifier.split('_')[1]} საწყობ{danshi}""" } )
+                item_choices = metals
+                item_label = 'აირჩიე მეტალი'
+                hidden_fields.extend(initial.keys())
+                hidden_fields.extend(['lot_id', 'pieces', 'stone_quality', 'image_location'])
         case 'მეტალის_დანაკარგი':
-            initial.update({'lot_id': lot_id, 'transaction_type': 'დამუშავება' if 'დამუშავება' in request.GET.get('next', 'დამუშავება') else 'ჩამოსხმა',
+            initial.update({'lot_id': lot_id, 'transaction_type': transaction_type,
                             'item': f'{metal_full_name} დანაკარგი', 'item_type': 'მეტალი',
                             'transaction_quantity_unit': 'გრამი',
                             'description': 'დანაკარგი' } )
@@ -663,16 +753,22 @@ def transaction_create(request, transaction_identifier='ნებისმიე
             hidden_fields.extend(initial.keys())
             hidden_fields.extend(['pieces', 'stone_quality', 'image_location'])
         case 'ხელფასი':
-            initial.update({'lot_id': lot_id, 'transaction_type': 'დამუშავება' if 'დამუშავება' in request.GET.get('next', 'დამუშავება') else 'ჩამოსხმა',
-                            'item': 'ფული', 'item_type': 'მომსახურება',  } )
+            initial.update({'lot_id': lot_id, 'transaction_type': transaction_type,
+                            'item': 'ფული', 'item_type': 'მომსახურება', 'description': 'მომსახერება/ხელფასის გადახდა' } )
             item_choices =  other_items + metals + stones
             item_label = 'ფული'
             hidden_fields.extend(initial.keys())
             hidden_fields.extend(['pieces', 'stone_quality', 'image_location'])
+        case 'ინფორმაცია':
+            item_choices =  [['', '']]
+            item_label = ''
+            hidden_fields = list(AddTransactionForm().fields.keys())
         case _:
             item_choices = metals + other_items + stones
             item_label = 'აქტივი'
 
+    if transaction_type not in TransactionTypes.objects.all().values_list('label', flat=True) and hidden_fields.count('transaction_type'):
+        hidden_fields.remove('transaction_type')
     form = AddTransactionForm(initial=initial)
     form.fields['item'] = forms.ChoiceField(choices=item_choices, widget=forms.Select(attrs={'class': 'form-control'}),  label=item_label)
     for field in hidden_fields:
@@ -681,14 +777,27 @@ def transaction_create(request, transaction_identifier='ნებისმიე
     ###########################################
     ##############create form##################
 
-    next_url = f'/lot/{lot_id}/update/' if lot_id else '/transaction_list/'
-    next_url = request.GET.get('next') or request.POST.get('next') or next_url
+    ##########create redirect logic############
+    ###########################################
+    # TODO: redirect logics, delete commented one if new one works
+    # next_url = request.GET.get('next') or request.POST.get('next') or '/transaction_list/'
+    # if lot_id:
+    #     redirect_url = f'/lot/{lot_id}/update/'
+    # else:
+    #     redirect_url = f'/transaction_list/{transaction_type}/transaction_type/' if initial.get('transaction_type', None) else f'/transaction_list/'
+    if initial.get('transaction_type', None):
+        redirect_url = f'/lot/{lot_id}/update/' if lot_id else f'/transaction_list/{transaction_type}/transaction_type/'
+    else:
+        redirect_url = f'/lot/{lot_id}/update/' if lot_id else f'/transaction_list/'
+    next_url = request.GET.get('next') or request.POST.get('next')
+    redirect_url += f'?next={next_url}'
+    ###########################################
+    ##########create redirect logic############
 
     if request.method == 'POST':
 
         form = AddTransactionForm(request.POST, request.FILES)
         if form.is_valid():
-
             # validate sign of quantity based on from or out of stock
             if (transaction_identifier in ('მეტალის_აღება', 'ხელფასი')):
                 value = -abs(form.cleaned_data['transaction_quantity'])
@@ -696,25 +805,15 @@ def transaction_create(request, transaction_identifier='ნებისმიე
                 value = abs(form.cleaned_data['transaction_quantity'])
             else:
                 value = form.cleaned_data['transaction_quantity']
-
             instance = form.save(commit=False)
             instance.transaction_quantity = value
-
             form.save()
+
             messages.success(request, 'ტრანზაქცია წარმატებით გატარდა.')
 
-            # next_url = request.GET.get('next') or request.POST.get('next') or '/transaction_list/'
-            if transaction_identifier in ('მეტალის_აღება', 'მეტალის_დაბრუნება', 'მეტალის_დანაკარგი', 'ხელფასი'):
-                return redirect('lot_update', lot_id=lot_id)
-            elif lot_id:
-                redirect_url = reverse('transaction_create', kwargs={'transaction_identifier': transaction_identifier, 'lot_id': lot_id})
-            else:
-                redirect_url = reverse('transaction_type', kwargs={'transaction_type': transaction_identifier})
-
-            redirect_url += f'?next={next_url}'
             return redirect(redirect_url)
         else:
-            messages.error(request, 'შეცდომაა ტრანზაქციის შესრულებისას')
+            messages.error(request, f'შეცდომა: {form.errors}')
 
     return render(request, 'transaction_form.html', {'form': form, 'transaction_identifier': transaction_identifier, 'action': 'დამატება',
                                                                          'materials_tables': materials_tables, 'summary_tables': summary_tables,
@@ -754,11 +853,7 @@ def transaction_update(request, tmstmp, item, transaction_identifier='ნებ�
             form.save()
             messages.success(request, 'ტრანზაქციაზე ინფორმაცია წარმატებით განახლდა.')
 
-            redirect_url = reverse('transaction_list')
-            redirect_url += f'?next={next_url}'
-
-            return redirect(redirect_url)
-            # return redirect('transaction_list')
+            return redirect(next_url)
         else:
             messages.error(request, 'პრობლემა ინფორმაციის განახლებისას!')
 
@@ -776,8 +871,20 @@ def auto_salary(request, lot_id):
                          'total_cost': 'სულ ფასი', 'act': '...'})]
     stat = f"""SELECT * FROM records_for_summary WHERE lot_id = {lot_id} AND item_type = 'მომსახურება' ORDER BY lot_id DESC, tmstmp DESC LIMIT 30"""
     table.extend(pd_query(stat, POSTGRESQL_ENGINE))
-    transactions_table = {header: table}
+    transactions_tables = [{header: table}]
+    header = 'პარტიაზე დამუშავების სხვა გატარებები'
+    table = [pd.Series({'lot_id': 'პრტ.N', 'description':'იდენტიფიკატორი', 'tmstmp': 'თარიღი', 'transaction_type': 'ტრნზ.ტიპი',
+                         'item': 'მსლ./მომსხ.', 'item_type': 'მასალის ტიპი', 'transaction_quantity': 'რაოდენობა', 'cost_unit': 'ერთ. ფასი',
+                         'total_cost': 'სულ ფასი', 'act': '...'})]
+    stat = f"""SELECT * FROM records_for_summary WHERE lot_id = {lot_id} AND item_type != 'მომსახურება' ORDER BY lot_id DESC, tmstmp DESC LIMIT 30"""
+    table.extend(pd_query(stat, POSTGRESQL_ENGINE))
+    transactions_tables.append({header: table})
 
+    # variables for calculation
+    total_weight_out = django_sql(f'SELECT total_weight_out FROM total_processing_per_lot WHERE lot_id = {lot_id}')[0][0]
+    metal_full_name = django_sql(f'SELECT metal_full_name FROM lots WHERE lot_id = {lot_id}')[0][0]
+    stat = f"""SELECT AVG(cost_unit) AS cost_unit FROM transactions WHERE lot_id = {lot_id} and transaction_type = 'ჩამოსხმა' AND item_type = 'მეტალი'"""
+    cost_unit = round(float(django_sql(stat)[0][0]), 2)
     salaries = pd_query(f"""SELECT * FROM salaries_per_lot WHERE lot_id = '{lot_id}'""", POSTGRESQL_ENGINE)[0]
     prices = pd_query(f"""SELECT * FROM lots WHERE lot_id = '{lot_id}'""", POSTGRESQL_ENGINE)[0]
     units = {'cost_grinding': 'გრამი', 'cost_manufacturing_stone': 'ცალი', 'cost_polishing': 'ნაჭერი', 'cost_plating': 'ნაჭერი', 'cost_sinji': 'ნაჭერი'}
@@ -786,6 +893,16 @@ def auto_salary(request, lot_id):
 
     if request.method == 'POST':
         salary_list = request.POST.getlist('salary_list')
+
+        if request.POST.get('apply_gold_lost', None):
+            data = [{'lot_id': lot_id, 'transaction_type': 'დამუშავება', 'item': metal_full_name, 'item_type': 'მეტალი',
+                    'description': 'მოტანილი ნაქლიბი', 'transaction_quantity': abs(float(request.POST.get('remaining_gold'))),
+                    'transaction_quantity_unit': 'გრამი', 'cost_unit': cost_unit, }]
+            insert_query('transactions', data, POSTGRESQL_ENGINE)
+            data = [{'lot_id': lot_id, 'transaction_type': 'დამუშავება', 'item': f'{metal_full_name} დანაკარგი',
+                     'item_type': 'მეტალი', 'description': 'დანაკარგი', 'transaction_quantity': abs(float(request.POST.get('lost_gold'))),
+                     'transaction_quantity_unit': 'გრამი', 'cost_unit': cost_unit, }]
+            insert_query('transactions', data, POSTGRESQL_ENGINE)
 
         for salary_type in salary_list:
             data = {'lot_id': lot_id, 'transaction_type': 'დამუშავება', 'item': 'ფული', 'item_type': 'მომსახურება', }
@@ -803,7 +920,8 @@ def auto_salary(request, lot_id):
         return redirect('auto_salary', lot_id)
 
         # return redirect('auto_salary.html', transaction_identifier=transaction_identifier, lot_id=lot_id)
-    return render(request, 'auto_salary.html', {'transactions_table': transactions_table, 'lot_id' : lot_id, 'salaries': salaries})
+    return render(request, 'auto_salary.html', {'transactions_tables': transactions_tables, 'lot_id' : lot_id, 'salaries': salaries,
+                                                                     'total_weight_out': total_weight_out, })
 
 # other
 

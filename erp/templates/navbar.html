@@ -22,6 +22,9 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url 'lot_list' %}">წარმოება</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'customer_list' %}">გაყიდვები</a>
+        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle"
              href="#" id="navbarDropdown"
@@ -35,8 +38,6 @@
                 {% for type in transaction_types %}
                     <li><a class="dropdown-item" href="{% url 'transaction_type' type.label %}">{{ type.label }}</a></li>
                 {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'transaction_type' 'გადაყვანა' %}">გადაყვანის გატარების დამატება</a></li>
           </ul>
         </li>
 
@@ -53,6 +54,7 @@
             <li><a class="dropdown-item" href="{% url 'admin:erp_metals_changelist' %}">მეტალები</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{% url 'admin:erp_masters_changelist' %}">ხელოსნები</a></li>
+            <li><a class="dropdown-item" href="{% url 'admin:erp_customers_changelist' %}">კლიენტები</a></li>
             <li><a class="dropdown-item" href="{% url 'admin:erp_genders_changelist' %}">სქესი</a></li>
             <li><a class="dropdown-item" href="{% url 'admin:erp_modelcategories_changelist' %}">მოდელის კატეგორია</a></li>
             <li><a class="dropdown-item" href="{% url 'admin:erp_stonenames_changelist' %}">ქვის სახელები</a></li>

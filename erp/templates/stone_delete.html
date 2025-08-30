@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    {% if stone.lot_id.lot_id %}
+        <h4>დარწმუნებული ხარ რომ გინდა წაშალო {{ stone.stone_full_name }} {{ stone.model_id }} მოდელზე {{ stone.lot_id.lot_id }} პარტიიდან?</h4>
+    {% else %}
+        <h2>დარწმუნებული ხარ რომ გინდა წაშალო {{ stone.stone_full_name }} ქვა {{ stone.model_id }} მოდელზე ?</h2>
+    {% endif %}
+
+    <br><br>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">დიახ</button>
+        {% if stone.lot_id.lot_id %}
+            <a href="{% url 'lot_update' stone.lot_id.lot_id %}" class="btn btn-secondary">არა</a>
+        {% else %}
+            <a href="{% url 'catalog' %}" class="btn btn-secondary">არა</a>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

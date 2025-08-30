@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>კლიენტები</h2>
+    <a href="{% url 'admin:erp_customers_changelist' %}" class="btn btn-primary mb-3">დაამატე ახალი მყიდველი</a>
+
+    <table class="table table-striped ">
+        <thead>
+            <tr class="table align-middle">
+                <th>გვარი სახელი</th>
+                <th>ტელეფონი</th>
+                <th>მდებარეობა</th>
+                <th>ნაყიდი რაოდენობა</th>
+                <th>ნაღიდი მოდელების წონა</th>
+                <th>ნაყიდი ქვების წონა</th>
+                <th>ნაყიდი ქვების რაოდენობა</th>
+                <th>ღირებულება</th>
+                <th>სულ ფასი</th>
+                <th>მოგება</th>
+                <th>გადახდილი</th>
+                <th>დარჩენილი</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+            <tr>
+                <td><a href="{% url 'customer_details' customer.full_name %}" class="btn btn-sm btn-primary">{{ customer.full_name }}</a></td>
+                <td>{{ customer.phone }}</td>
+                <td>{{ customer.location }}</td>
+                <td>{{ customer.models_count }}</td>
+                <td>{{ customer.total_model_weight }}</td>
+                <td>{{ customer.total_stone_weight }}</td>
+                <td>{{ customer.total_stone_quantity }}</td>
+                <td>{{ customer.total_cost }}</td>
+                <td>{{ customer.total_price }}</td>
+                <td>{{ customer.total_profit }}</td>
+                <td>
+                    {% if customer.location == 'გაყიდული' %}
+                        {{ customer.paid }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if customer.location == 'გაყიდული' %}
+                        <span style="color: {% if customer.remaining_payment < 0 %}red{% endif %}">{{ customer.remaining_payment }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

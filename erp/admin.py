@@ -55,8 +55,18 @@ class ItemTypesAdmin(admin.ModelAdmin):
 
 
 @admin.register(MaterialsServices)
-class ItemTypesAdmin(admin.ModelAdmin):
+class MaterialsServicesAdmin(admin.ModelAdmin):
     list_display = ['label', "note"]
+
+
+@admin.register(ProductLocation)
+class ProductLocationAdmin(admin.ModelAdmin):
+    list_display = ['label', "note"]
+
+
+@admin.register(Customers)
+class CustomersAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in Customers._meta.fields]
 
 
 #########Complicated  lookup tables that needs additional django_id############

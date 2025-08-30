@@ -10,8 +10,7 @@ import decimal
 from django.db import models
 from django.utils.timezone import now
 from django.db.models.functions import Concat
-from django.db.models import F, ExpressionWrapper
-
+from django.db.models import F, ExpressionWrapper, Sum
 
 def now_as_str():
     return now().strftime('%y-%m-%d-%H-%M-%S')
@@ -162,6 +161,40 @@ class MaterialsServices(models.Model):
         return f"{self.label}"
 
 
+class ProductLocation(models.Model):
+    label = models.CharField(primary_key=True)
+    note = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'product_location'
+        verbose_name = 'პროდუქტის მდებარეობა'
+        verbose_name_plural = 'პროდუქტის მდებარეობა'
+        db_table_comment = 'lookup values'
+
+    def __str__(self):
+        return f"{self.label}"
+
+
+class Customers(models.Model):
+    full_name = models.CharField(primary_key=True)
+    phone = models.CharField(null=True, blank=True)
+    table_number = models.CharField(null=True, blank=True)
+    id = models.CharField(null=True, blank=True)
+    address = models.CharField(null=True, blank=True)
+    note = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'customers'
+        verbose_name = 'კლიენტი'
+        verbose_name_plural = 'კლიენტები'
+        db_table_comment = 'customer names and info'
+
+    def __str__(self):
+        return f"{self.full_name}"
+
+
 #########Complicated  lookup tables that needs additional id############
 ## those complicated lookup tables need addition of django_id in database
 ## do not need custom forms
@@ -262,6 +295,7 @@ class Lots(models.Model):
     cost_plating = models.DecimalField(max_digits=10, decimal_places=2)
     cost_sinji = models.DecimalField(max_digits=10, decimal_places=2)
     margin_stones = models.DecimalField(max_digits=10, decimal_places=2)
+    price_gram_gold = models.DecimalField(max_digits=10, decimal_places=2)
     note = models.TextField(blank=True, null=True)
     total_lot_weight = 0
 
@@ -271,23 +305,25 @@ class Lots(models.Model):
 
     @property
     def models_sold(self):
-        return LotModels.objects.filter(lot_id=self.lot_id, sold=True).count()
+        return LotModels.objects.filter(lot_id=self.lot_id, location='გაყიდული').count()
 
     @property
     def total_stone_price(self):
         try:
-            price = sum(LotModelStone.price for LotModelStone in LotModelStones.objects.filter(lot_id=self.lot_id))
+            result = LotModelStones.objects.filter(lot_id=self.lot_id).aggregate(
+                total=Sum(F('price'), default=0) )
+            return result['total'] or 0
         except:
-            price = 'Err'
-        return price
+            return 'Err'
 
     @property
     def total_model_weight(self):
         try:
-            weight = sum(lotmodel.weight for lotmodel in LotModels.objects.filter(lot_id=self.lot_id))
+            result = LotModels.objects.filter(lot_id=self.lot_id).aggregate(
+                total=Sum(F('weight'), default=0) )
+            return result['total'] or 0
         except:
-            weight = 'Err'
-        return weight
+            return 'Err'
 
     class Meta:
         managed = False
@@ -331,13 +367,24 @@ class LotModels(models.Model):
     model_id = models.ForeignKey('Catalog', models.DO_NOTHING, db_column='model_id', to_field='model_id')
     tmstmp = models.CharField(primary_key=True, default=now_as_str)
     weight = models.DecimalField(default=0, max_digits=10, decimal_places=2, blank=True, null=True)
-    sold = models.BooleanField(default=False)
+    customer = models.ForeignKey('Customers', models.DO_NOTHING, db_column='customer', to_field='full_name', blank=True, null=True)
+    location = models.ForeignKey('ProductLocation', models.DO_NOTHING, db_column='location', default='სეიფი', to_field='label',)
+    cost_gram_gold = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    price_gram_gold = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    sold = models.GeneratedField(expression=ExpressionWrapper( (F('location') == 'გაყიდული'), output_field=models.BooleanField()),
+                                 output_field=models.BooleanField(), db_persist=True)
+    model_gold_cost = models.GeneratedField(expression=ExpressionWrapper(F('cost_gram_gold') * F('weight'),
+                                                                        output_field=models.DecimalField(max_digits=10,decimal_places=2)),
+                                            output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
+    model_gold_price = models.GeneratedField(expression=ExpressionWrapper(F('price_gram_gold') * F('weight'),
+                                                                        output_field=models.DecimalField(max_digits=10,decimal_places=2)),
+                                             output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
     note = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'lot_models'
-        ordering = ['-lot_id', '-tmstmp', 'model_id']
+        ordering = ['location', '-lot_id', 'model_id', 'weight', '-tmstmp']
         verbose_name = 'პარტიის მოდელი'
         verbose_name_plural = 'პარტიის მოდელები'
         db_table_comment = 'models added to lot for production'
@@ -358,10 +405,24 @@ class LotModelStones(models.Model):
     cost_piece = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     cost_manufacturing_stone = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     margin_stones = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    price = models.GeneratedField(expression=ExpressionWrapper( (F('cost_piece') + F('cost_manufacturing_stone') + F('margin_stones')) * F('quantity'),
-                                                                output_field=models.DecimalField(max_digits=10, decimal_places=2) ),
-                                  output_field=models.DecimalField(max_digits=10, decimal_places=2),
-                                  db_persist=True, blank=True, null=True )
+    total_weight = models.GeneratedField(expression=ExpressionWrapper(F('quantity') * F('weight'),
+                                                                      output_field=models.DecimalField(max_digits=10,decimal_places=4)),
+                                         output_field=models.DecimalField(max_digits=10, decimal_places=4), db_persist=True)
+    total_cost_piece = models.GeneratedField(expression=ExpressionWrapper(F('quantity') * F('cost_piece'),
+                                                                          output_field=models.DecimalField(max_digits=10,decimal_places=2)),
+                                             output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
+    total_cost_manufacturing_stone = models.GeneratedField(expression=ExpressionWrapper(F('quantity') * F('cost_manufacturing_stone'),
+                                                                                          output_field=models.DecimalField(max_digits=10,decimal_places=2)),
+                                                           output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
+    total_cost = models.GeneratedField(expression=ExpressionWrapper(F('quantity') * (F('cost_piece') + F('cost_manufacturing_stone')),
+                                                                    output_field=models.DecimalField(max_digits=10,decimal_places=2)),
+                                       output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
+    total_margin_stones = models.GeneratedField(expression=ExpressionWrapper(F('quantity') * F('margin_stones'),
+                                                                            output_field=models.DecimalField(max_digits=10,decimal_places=2)),
+                                                output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
+    total_price = models.GeneratedField(expression=ExpressionWrapper(F('quantity') * (F('cost_piece') + F('cost_manufacturing_stone') + F('margin_stones')),
+                                                                    output_field=models.DecimalField(max_digits=10,decimal_places=2)),
+                                       output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
     note = models.TextField(blank=True, null=True)
     django_id = models.AutoField(primary_key=True)
 
@@ -372,7 +433,6 @@ class LotModelStones(models.Model):
         verbose_name = 'პარტიის მოდელის ქვა'
         verbose_name_plural = 'პარტიის მოდელის ქვები'
         db_table_comment = 'stones of models in lot'
-
 
     def __str__(self):
         return f"{self.lot_id.lot_id}-{self.model_id}-{self.tmstmp.tmstmp}-{self.stone_full_name}"
@@ -391,6 +451,7 @@ class Transactions(models.Model):
     transaction_type = models.ForeignKey('TransactionTypes', models.DO_NOTHING, db_column='transaction_type', related_name='transaction_transaction_type')
     description = models.CharField(blank=True, null=True)
     lot_id = models.ForeignKey('Lots', models.DO_NOTHING, db_column='lot_id', related_name='transaction_lot_id', blank=True, null=True)
+    customer = models.ForeignKey('Customers', models.DO_NOTHING, db_column='customer', blank=True, null=True)
     transaction_quantity = models.DecimalField(max_digits=10, decimal_places=4)
     transaction_quantity_unit = models.ForeignKey('Units', models.DO_NOTHING, db_column='transaction_quantity_unit', related_name='transaction_quantity_unit')
     pieces = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
@@ -418,40 +479,17 @@ class Transactions(models.Model):
         return f"{self.tmstmp}-{self.item}-{self.total_cost}"
 
 
-# class Purchases(models.Model):
-#     def image_path(instance, filename):
-#         """Method to take model_id and file extension and return path to image file"""
-#         ext = filename.split('.')[-1]
-#         filename = f"{instance.tmstmp}_{instance.item}.{ext}"
-#         return f'purchases/{filename}'
-#
-#     tmstmp = models.CharField(primary_key=True, default=now_as_str)
-#     item = models.CharField()
-#     purchase_id = models.CharField(blank=True, null=True)
-#     purchase_quantity = models.DecimalField(max_digits=10, decimal_places=4)
-#     purchase_quantity_unit = models.ForeignKey('Units', models.DO_NOTHING, db_column='purchase_quantity_unit', related_name='purchase_weight_unit')
-#     pieces = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
-#     stone_quality = models.ForeignKey('StoneQualities', models.DO_NOTHING, db_column='stone_quality', related_name='purchase_stone_quality', blank=True, null=True)
-#     cost_unit = models.DecimalField(max_digits=10, decimal_places=2)
-#     purchase_type = models.ForeignKey('TransactionTypes', models.DO_NOTHING, db_column='purchase_type', related_name='purchase_purchase_type')
-#     total_cost = models.GeneratedField(expression=ExpressionWrapper( F('purchase_quantity')  * F('cost_unit'), output_field=models.DecimalField(max_digits=10, decimal_places=2) ),
-#                                        output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
-#     cost_piece = models.GeneratedField(expression=ExpressionWrapper( ( F('purchase_quantity')  * F('cost_unit') ) / ( F('pieces') ),
-#                                                                          output_field=models.DecimalField(max_digits=10, decimal_places=2) ),
-#                                        output_field=models.DecimalField(max_digits=10, decimal_places=2), db_persist=True)
-#     image_location = models.ImageField(upload_to=image_path, null=True, blank=True)
-#     note = models.TextField(blank=True, null=True)
-#
-#     class Meta:
-#         managed = False
-#         db_table = 'purchases'
-#         ordering = ['-tmstmp', 'item']
-#         verbose_name = 'შესყიდვა'
-#         verbose_name_plural = 'შესყიდვები'
-#         db_table_comment = 'records of purchases for stones, metals and other items or services'
-#
-#     def __str__(self):
-#         return f"{self.tmstmp}-{self.item}-{self.total_cost}"
+######################views from database#################
+## those are not tables but views that calculate some variables
+## they are not managed or filled, but used for calculations
+
+class CCPL(models.Model):
+    lot_id = models.IntegerField(primary_key=True)
+    cost_per_gram = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        managed = False
+        db_table = 'cost_calculation_per_lot'
 
 
 ##########################not yet determined###########################

@@ -4,186 +4,197 @@
 {% load custom_tags %}
 
 <div class="container mt-4">
-    {% if action == 'დამატება' %}
+    {% if transaction_identifier == 'ინფორმაცია' %}
+        <h2>ინფორმაცია <a href="{% url 'lot_update' form.lot_id.value %}?next={{ request.path|urlencode }}" class="btn btn-secondary">{{ form.lot_id.value }} პარტიაზე</a></h2>
+    {% elif action == 'დამატება' %}
         <h2>ახალი {{ transaction_identifier|slice:":-1" }}ის {{ action }} {% if form.lot_id.value %}<a href="{% url 'lot_update' form.lot_id.value %}?next={{ request.path|urlencode }}" class="btn btn-secondary">{{ form.lot_id.value }} პარტიაზე</a>{% endif %}</h2>
     {% else %}
         <h2>{{ addtransactionform.model_id.value }} ტრანზაქციაზე ინფორმაციის {{ action }} </h2>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data" action="{% url 'transaction_create' transaction_identifier form.lot_id.value|default:0 %}?next={{ next_url }}">
-        {% csrf_token %}
+    {% if transaction_identifier != 'ინფორმაცია' %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
 
-        <div class="mb-2 d-flex gap-2">
-            <div class="mb-3 text-center">
-                <div class="mb-2">
-                    <img src="/media/{% if form.image_location.value  %}{{ form.image_location.value }}{% else %}no_image.jpg{% endif %}" alt="უსურათო" width="200" height="200">
-                </div>
-                <div class="mb-2">
-                    <button type="submit" class="btn btn-primary">{{ action }}</button>
-                    <a href="{{ next_url }}?next={{ request.path|urlencode }}" class="btn btn-secondary">უკან</a>
-                </div>
-                {% if transaction_identifier == "ჩამოსხმა" or transaction_identifier == "დამუშავება" and form.lot_id.value %}
+            <div class="mb-2 d-flex gap-2">
+                <div class="mb-3 text-center">
                     <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'მეტალის_აღება' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-warning">მეტალის აღება</a>
+                        <img src="/media/{% if form.image_location.value  %}{{ form.image_location.value }}{% else %}no_image.jpg{% endif %}" alt="უსურათო" width="200" height="200">
                     </div>
                     <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'მეტალის_დაბრუნება' form.lot_id.value %}?next={{ request.path|urlencode }}" class="btn btn-outline-secondary">ნარჩენის დაბრუნება</a>
+                        <button type="submit" class="btn btn-primary">{{ action }}</button>
+                        <a href="{{ next_url }}?next={{ request.path|urlencode }}" class="btn btn-secondary">უკან</a>
                     </div>
-                    <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'მეტალის_დანაკარგი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-danger">დანაკარგი</a>
-                    </div>
-                    <div class="mb-2">
-                        <a href="{% url 'transaction_create' 'ხელფასი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-info">ხელფასის გადახდა</a>
-                    </div>
-                {% endif %}
-            </div>
-            <div class="mb-1">
-                {% for field in form %}
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                {% endfor %}
-            </div>
-            <div class="mb-1">
-                {% if transaction_identifier == 'გადაყვანა' %}
-                    <p>არსებული სინჯებიდან გადადნობით ვიღებთ ახალ სინჯს</p>
-                    <p>ორი ტიპის გატარება არის</p>
-                    <ol>
-                     <li>ვიღებთ გადასაყვანად მეტალს
-                        <ul>
-                            <li>რაოდენობას ვატარებთ მინუსით</li>
-                            <li>აკლდება შესაბამის მეტალს</li>
-                        </ul>
-                     </li>
-                     <li>ვაბრუნებთ გადაყვანილ მეტალს
-                        <ul>
-                            <li>რაოდენობას ვატარებთ პლიუსით</li>
-                            <li>ემატება შესაბამის მეტალს</li>
-                            <li>ფასის გამოსათვლელად გამოიყენე შემდეგი კალკულატორი</li>
-                            <li>
-                                <div class="mb-1 d-flex">
-                                    <font color="red">სულ აღებული მეტალის ფასი</font>
-                                    <input type="number" class="form-control" value="{{ summary_tables.0.1.col_3 }}" id="total_cost" name="" oninput="calculateSum()">
-                                </div>
-                            </li>
-                            <li>
-                                <div class="mb-2 d-flex gap-2">
-                                    <font color="red">მიღებული მეტალის წონა</font>
-                                    <input type="number" class="form-control" value="0" id="weight" name="" oninput="calculateSum()">
-                                </div>
-                            </li>
-                            <li>
-                                <div class="mb-2 d-flex gap-2">
-                                    <font color="red">ფასის დაანგარიშება</font>
-                                    <input type="number" class="form-control" value="0" id="price" name="" oninput="calculateSum()">
-                                </div>
-                            </li>
-                            <script>
-                                function calculateSum() {
-                                    const total_cost = parseFloat(document.getElementById('total_cost').value) || 0;
-                                    const weight = parseFloat(document.getElementById('weight').value) || 0;
-                                    document.getElementById('price').value = (total_cost / weight).toFixed(2)
-                                }
-                            </script>
-                        </ul>
-                     </li>
-                    </ol>
-                {% elif  transaction_identifier == 'ჩამოსხმა'  %}
-                    <p>საიუველირო ნაწარმის ჩამოსხმა</p>
-                    <p>ოთხი ტიპის გატარება არის</p>
-                    <ol>
-                     <li>ვიღებთ ჩამოსხმისთვის მეტალს
-                        <ul>
-                            <li>რაოდენობას ვატარებთ მინუსით</li>
-                            <li>აკლდება შესაბამის მეტალს</li>
-                        </ul>
-                     </li>
-                     <li>ვაბრუნებთ მეტალს (ჯართს)
-                        <ul>
-                            <li>რაოდენობას ვატარებთ პლიუსით</li>
-                            <li>ემატება შესაბამის მეტალს</li>
-                        </ul>
-                     </li>
-                     <li>გადაყვანის დანაკარგის გატარება
-                        <ul>
-                             <li>მასალაში ვუთითებთ "ოქრო-585 დანაკარგი"</li>
-                             <li>მეტალის რაოდენობა არ იცვლება</li>
-                             <li>რაოდენობას ვატარებთ პლიუსით</li>
-                        </ul>
-                     </li>
-                     <li>ჩამოსხმის მომსახურების გადახდა
-                        <ul>
-                             <li>მასალაში ვუთითებთ ფულს</li>
-                             <li>რაოდენობაში ვუთითებთ ჩამოსხმის წონას მინუსით</li>
-                             <li>ფასში გრამზე გადასახადს</li>
-                             <li>სულ დაიანგარიშებს ფასს და გამოაკლდება ფულს</li>
-                        </ul>
-                     </li>
-                    </ol>
-                {% elif  transaction_identifier == 'დამუშავება'  %}
-                    <p>საიუველირო ნაწარმის დამუშავება</p>
-                    <p>ოთხი ტიპის გატარება არის</p>
-                    <ol>
-                     <li>ვიღებთ დამუშავებისთვის მეტალს (პრიპოი, მავთული)
-                        <ul>
-                            <li>რაოდენობას ვატარებთ მინუსით</li>
-                            <li>აკლდება შესაბამის მეტალს</li>
-                        </ul>
-                     </li>
-                     <li>ხელოსანი აბრუნებს ნარჩენებს
-                        <ul>
-                            <li>რაოდენობას ვატარებთ პლიუსით</li>
-                            <li>ემატება შესაბამის მეტალს</li>
-                        </ul>
-                     </li>
-                     <li>დამუშავების დანაკარგის გატარება
-                        <ul>
-                             <li>მასალაში ვუთითებთ "ოქრო-585 დანაკარგი"</li>
-                             <li>მეტალის რაოდენობა არ იცვლება</li>
-                             <li>რაოდენობას ვატარებთ პლიუსით</li>
-                        </ul>
-                     </li>
-                     <li>დამუშავების მომსახურების გადახდა
-                        <ul>
-                             <li>მასალაში ვუთითებთ ფულს</li>
-                             <li>რაოდენობაში ვუთითებთ ჩამოსხმის წონას მინუსით</li>
-                             <li>ფასში გრამზე გადასახადს</li>
-                             <li>სულ დაიანგარიშებს ფასს და გამოაკლდება ფულს</li>
-                        </ul>
-                     </li>
-                    </ol>
-                {% else %}
-            {#                    TODO: Add some instructions#}
-                    <p style="text-align: center">სხვადასხვა დამხმარე ხელსაწყოები</p>
-                    <ul>
-                     <li>
-                        <div class="mb-2 d-flex">
-                            სულ ფასი
-                            <input type="number" class="form-control" id="total_cost" name="" step="0.01" oninput="calculateTotalCost()">
+                    {% if transaction_identifier == "ჩამოსხმა" or transaction_identifier == "დამუშავება" and form.lot_id.value %}
+                        <div class="mb-2">
+                            <a href="{% url 'transaction_create' 'მეტალის_აღება' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-warning">მეტალის აღება</a>
                         </div>
-                    </li>
-                    <li>
-                        <div class="mb-2 d-flex">
-                            ცალის ფასი
-                            <input type="number" class="form-control" id="piece_price" name="" step="0.01" oninput="calculatePiecePrice()">
+                        <div class="mb-2">
+                            <a href="{% url 'transaction_create' 'მეტალის_დაბრუნება' form.lot_id.value %}?next={{ request.path|urlencode }}" class="btn btn-outline-secondary">ნარჩენის დაბრუნება</a>
                         </div>
-                    </li>
-                    <script>
-                        function calculateTotalCost() {
-                            const transaction_quantity = parseFloat(document.getElementById('transaction_quantity').value) || 0;
-                            const cost_unit = parseFloat(document.getElementById('cost_unit').value) || 0;
-                            document.getElementById('total_cost').value = (transaction_quantity * cost_unit).toFixed(2)
-                        }
-                        function calculatePiecePrice() {
-                            const total_cost = parseFloat(document.getElementById('total_cost').value) || 0;
-                            const pieces = parseFloat(document.getElementById('pieces').value) || 0;
-                            document.getElementById('piece_price').value = (total_cost / pieces).toFixed(2)
-                        }
-                    </script>
-                    </ul>
-                {% endif %}
+                        <div class="mb-2">
+                            <a href="{% url 'transaction_create' 'მეტალის_დანაკარგი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-danger">დანაკარგი</a>
+                        </div>
+                        <div class="mb-2">
+                            <a href="{% url 'transaction_create' 'ხელფასი' form.lot_id.value  %}?next={{ request.path|urlencode }}" class="btn btn-outline-info">ხელფასის გადახდა</a>
+                        </div>
+                    {% elif transaction_identifier == "გადაყვანა" %}
+                        <div class="mb-2">
+                            <a href="{% url 'transaction_create' 'მეტალის_აღება' 0 %}?next=/transaction_list/გადაყვანა/transaction_type/" class="btn btn-outline-warning">მეტალის აღება</a>
+                        </div>
+                        <div class="mb-2">
+                            <a href="{% url 'transaction_create' 'მეტალის_დაბრუნება' 0 %}?next=/transaction_list/გადაყვანა/transaction_type/" class="btn btn-outline-secondary">მეტალის დაბრუნება</a>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="mb-1">
+                    {% for field in form %}
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    {% endfor %}
+                </div>
+                <div class="mb-1">
+                    {% if transaction_identifier == 'გადაყვანა' or transaction_identifier == 'მეტალის_დაბრუნება'  %}
+                        <p>არსებული სინჯებიდან გადადნობით ვიღებთ ახალ სინჯს</p>
+                        <p>ორი ტიპის გატარება არის</p>
+                        <ol>
+                         <li>ვიღებთ გადასაყვანად მეტალს
+                            <ul>
+                                <li>რაოდენობას ვატარებთ მინუსით</li>
+                                <li>აკლდება შესაბამის მეტალს</li>
+                            </ul>
+                         </li>
+                         <li>ვაბრუნებთ გადაყვანილ მეტალს
+                            <ul>
+                                <li>რაოდენობას ვატარებთ პლიუსით</li>
+                                <li>ემატება შესაბამის მეტალს</li>
+                                <li>ფასის გამოსათვლელად გამოიყენე შემდეგი კალკულატორი</li>
+                                <li>
+                                    <div class="mb-1 d-flex">
+                                        <font color="red">სულ აღებული მეტალის ფასი</font>
+                                        <input type="number" class="form-control" value="{{ summary_tables.0.გადაყვანები.1.total_cost_in }}" id="total_cost" name="" oninput="calculateSum()">
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="mb-2 d-flex gap-2">
+                                        <font color="red">მიღებული მეტალის წონა</font>
+                                        <input type="number" class="form-control" value={{ summary_tables.0.გადაყვანები.1.total_weight_in }} id="weight" name="" oninput="calculateSum()">
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="mb-2 d-flex gap-2">
+                                        <font color="red">ფასის დაანგარიშება</font>
+                                        <input type="number" class="form-control" value={{ summary_tables.0.გადაყვანები.1.total_cost_in|dividerem2:summary_tables.0.გადაყვანები.1.total_weight_in }} id="price" name="" oninput="calculateSum()">
+                                    </div>
+                                </li>
+                                <script>
+                                    function calculateSum() {
+                                        const total_cost = parseFloat(document.getElementById('total_cost').value) || 0;
+                                        const weight = parseFloat(document.getElementById('weight').value) || 0;
+                                        document.getElementById('price').value = (total_cost / weight).toFixed(2)
+                                    }
+                                </script>
+                            </ul>
+                         </li>
+                        </ol>
+                    {% elif  transaction_identifier == 'ჩამოსხმა'  %}
+                        <p>საიუველირო ნაწარმის ჩამოსხმა</p>
+                        <p>ოთხი ტიპის გატარება არის</p>
+                        <ol>
+                         <li>ვიღებთ ჩამოსხმისთვის მეტალს
+                            <ul>
+                                <li>რაოდენობას ვატარებთ მინუსით</li>
+                                <li>აკლდება შესაბამის მეტალს</li>
+                            </ul>
+                         </li>
+                         <li>ვაბრუნებთ მეტალს (ჯართს)
+                            <ul>
+                                <li>რაოდენობას ვატარებთ პლიუსით</li>
+                                <li>ემატება შესაბამის მეტალს</li>
+                            </ul>
+                         </li>
+                         <li>გადაყვანის დანაკარგის გატარება
+                            <ul>
+                                 <li>მასალაში ვუთითებთ "ოქრო-585 დანაკარგი"</li>
+                                 <li>მეტალის რაოდენობა არ იცვლება</li>
+                                 <li>რაოდენობას ვატარებთ პლიუსით</li>
+                            </ul>
+                         </li>
+                         <li>ჩამოსხმის მომსახურების გადახდა
+                            <ul>
+                                 <li>მასალაში ვუთითებთ ფულს</li>
+                                 <li>რაოდენობაში ვუთითებთ ჩამოსხმის წონას მინუსით</li>
+                                 <li>ფასში გრამზე გადასახადს</li>
+                                 <li>სულ დაიანგარიშებს ფასს და გამოაკლდება ფულს</li>
+                            </ul>
+                         </li>
+                        </ol>
+                    {% elif  transaction_identifier == 'დამუშავება'  %}
+                        <p>საიუველირო ნაწარმის დამუშავება</p>
+                        <p>ოთხი ტიპის გატარება არის</p>
+                        <ol>
+                         <li>ვიღებთ დამუშავებისთვის მეტალს (პრიპოი, მავთული)
+                            <ul>
+                                <li>რაოდენობას ვატარებთ მინუსით</li>
+                                <li>აკლდება შესაბამის მეტალს</li>
+                            </ul>
+                         </li>
+                         <li>ხელოსანი აბრუნებს ნარჩენებს
+                            <ul>
+                                <li>რაოდენობას ვატარებთ პლიუსით</li>
+                                <li>ემატება შესაბამის მეტალს</li>
+                            </ul>
+                         </li>
+                         <li>დამუშავების დანაკარგის გატარება
+                            <ul>
+                                 <li>მასალაში ვუთითებთ "ოქრო-585 დანაკარგი"</li>
+                                 <li>მეტალის რაოდენობა არ იცვლება</li>
+                                 <li>რაოდენობას ვატარებთ პლიუსით</li>
+                            </ul>
+                         </li>
+                         <li>დამუშავების მომსახურების გადახდა
+                            <ul>
+                                 <li>მასალაში ვუთითებთ ფულს</li>
+                                 <li>რაოდენობაში ვუთითებთ ჩამოსხმის წონას მინუსით</li>
+                                 <li>ფასში გრამზე გადასახადს</li>
+                                 <li>სულ დაიანგარიშებს ფასს და გამოაკლდება ფულს</li>
+                            </ul>
+                         </li>
+                        </ol>
+                    {% else %}
+                {#                    TODO: Add some instructions#}
+                        <p style="text-align: center">სხვადასხვა დამხმარე ხელსაწყოები</p>
+                        <ul>
+                         <li>
+                            <div class="mb-2 d-flex">
+                                სულ ფასი
+                                <input type="number" class="form-control" id="total_cost" name="" step="0.01" oninput="calculateTotalCost()">
+                            </div>
+                        </li>
+                        <li>
+                            <div class="mb-2 d-flex">
+                                ცალის ფასი
+                                <input type="number" class="form-control" id="piece_price" name="" step="0.01" oninput="calculatePiecePrice()">
+                            </div>
+                        </li>
+                        <script>
+                            function calculateTotalCost() {
+                                const transaction_quantity = parseFloat(document.getElementById('transaction_quantity').value) || 0;
+                                const cost_unit = parseFloat(document.getElementById('cost_unit').value) || 0;
+                                document.getElementById('total_cost').value = (transaction_quantity * cost_unit).toFixed(2)
+                            }
+                            function calculatePiecePrice() {
+                                const total_cost = parseFloat(document.getElementById('total_cost').value) || 0;
+                                const pieces = parseFloat(document.getElementById('pieces').value) || 0;
+                                document.getElementById('piece_price').value = (total_cost / pieces).toFixed(2)
+                            }
+                        </script>
+                        </ul>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+    {% endif %}
     <br>
     {% if form.lot_id.value or transaction_identifier == 'გადაყვანა' %}
         {% for header, table in transactions_table.items %}
