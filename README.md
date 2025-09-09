@@ -1,5 +1,5 @@
 <h2 align="center">
-  <a href="#"><img src="cauli_logo.png" alt="Cauli Logo" width="200"></a>
+  <a href="#"><img src="cauli_logo.png" alt="Cauli Logo"></a>
   <br>
   <b>Cauli Jewelry Management System</b>
 </h2>
