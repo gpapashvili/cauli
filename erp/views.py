@@ -1229,7 +1229,7 @@ def lookup_table(request, table_name, action, label):
 ################## in progress views ######################
 
 def home(request):
-    # login to db in any view that uses pandas
+    # login to db in any view that uses pandass
     return render(request, 'home.html')
 
 
