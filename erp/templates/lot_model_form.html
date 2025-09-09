@@ -19,7 +19,7 @@
                <img src="/media/{{ form.instance.image_location }}" alt="უსურათო" width="200" height="200">
                <br><br>
                <button type="submit" class="btn btn-primary">{{ action }}</button>
-               <a href="{% url 'lot_update' form.lot_id.value %}" class="btn btn-secondary">უკან</a>
+               <a href="{{ next_url }}" class="btn btn-secondary">უკან</a>
             </div>
             <div class="mb-1">
                 {% for field in form %}
@@ -29,6 +29,13 @@
                         <br>
                     {% endif %}
                 {% endfor %}
+            </div>
+            <div class="mb-1">
+                <ul>
+                    <li>თვითღირებულება: <span style="color: red">{{ model_cost }}</span></li>
+                    <li>გასაყიდი ფასი: <span style="color: deepskyblue">{{ model_price }}</span></li>
+                    <li>მოგება: <span style="color: greenyellow">{{ model_profit }}</span></li>
+                </ul>
             </div>
         </div>
     </form>

@@ -61,7 +61,6 @@ ROOT_URLCONF = 'cauli.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        #'DIRS': [BASE_DIR / 'templates'], do not now why this was in old project
         'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -137,5 +136,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 MEDIA_URL = 'media/'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 STATIC_URL = 'static/'
+# needed for static bootstrap
+STATICFILES_DIRS = [ BASE_DIR / "static", ]
+
+
+
+

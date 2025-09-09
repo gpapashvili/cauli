@@ -26,7 +26,7 @@ def create_db_engine(_user, _passw, _db_server = os.environ.get('DATABASE_HOST')
     try:
         _eng = sqla.create_engine(_url)
         with _eng.connect() as _conn:
-            _results = _conn.execute(sqla.text(("SELECT 1"))).fetchall()
+            _results = _conn.execute(sqla.text("SELECT 1")).fetchall()
         return _eng if _results else "SQL-ის გაშვებისას დაფიქსირდა შეცდომა"
     except Exception as e:
         return f"ბაზასთან დაკავშირებისას დაფიქსირდა შეცდომა: {e}"

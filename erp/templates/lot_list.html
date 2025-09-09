@@ -17,10 +17,9 @@
                 <th>პარტ. წონა</th>
                 <th>მოდელ. წონა</th>
                 <th>ფასები</th>
-{#                <th>მოგ. ქვაზე</th>#}
-                <th>სულ ქვ.ფასი</th>
-                <th>ფასი</th>
-                <th>ღირებულება</th>
+                <th>სულ ღირ.</th>
+                <th>სულ ფასი</th>
+                <th>მოგება</th>
                 <th>კომენტარი</th>
                 <th>...</th>
             </tr>
@@ -34,26 +33,27 @@
                 <td>{{ lot.master }}</td>
                 <td>{{ lot.models_count }}</td>
                 <td>{{ lot.models_sold }}</td>
-                <td>{{ lot.total_lot_weight }}</td>
-                <td>{{ lot.total_model_weight }}</td>
+                <td>{{ lot.total_lot_weight|floatformat:2 }}</td>
+                <td>{{ lot.total_model_weight|floatformat:2 }}</td>
                 <td class="small">
-                    <li>დამუშავება:{{ lot.cost_grinding }}</li>
-                    <li>თვლ.ჩასმა:{{ lot.cost_manufacturing_stone }}</li>
-                    <li>გაპრიალება:{{ lot.cost_polishing }}</li>
-                    <li>როდირება:{{ lot.cost_plating }}</li>
-                    <li>სინჯი:{{ lot.cost_sinji }}</li>
-                    <li>მოგ.ქვაზე:{{ lot.margin_stones }}</li>
+                    <ul>
+                        <li>დამუშავება:{{ lot.cost_grinding }}</li>
+                        <li>თვლ.ჩასმა:{{ lot.cost_manufacturing_stone }}</li>
+                        <li>გაპრიალება:{{ lot.cost_polishing }}</li>
+                        <li>როდირება:{{ lot.cost_plating }}</li>
+                        <li>სინჯი:{{ lot.cost_sinji }}</li>
+                        <li>მოგ.ქვაზე:{{ lot.margin_stones }}</li>
+                    </ul>
                 </td>
-{#                <td>{{ lot.margin_stones }}</td>#}
-                <td>{{ lot.total_stone_price }}</td>
-                <td>{{ lot.price }}</td>
-                <td>{{ lot.cost }}</td>
+                <td>{{ lot.total_cost|floatformat:2 }}</td>
+                <td>{{ lot.total_price|floatformat:2 }}</td>
+                <td>{{ lot.total_margin|floatformat:2 }}</td>
                 <td>{{ lot.note }}</td>
-                <td width="10%">
+                <td>
                     <div class="mb-3">
                         <a href="{% url 'lot_stone_totals' lot.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-info">ქვების ჯამი</a>
                         <br>
-                        <a href="{% url 'transaction_create' 'ლლოტის_გატარება' lot.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-success">გატარებები</a>
+                        <a href="{% url 'transaction_create' 'ინფორმაცია' lot.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-success">გატარებები</a>
                         <br>
                         <a href="{% url 'lot_delete' lot.lot_id %}" class="btn btn-sm btn-danger">პარტიის წაშლა</a>
                     </div>

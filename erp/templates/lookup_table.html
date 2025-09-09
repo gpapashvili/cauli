@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load custom_tags %}
+<div class="container mt-4">
+    <h2>{{ header }}</h2><br><br>
+    <div class="mb-2 d-flex gap-4">
+        <div class="mb-2">
+        <form method="post" enctype="multipart/form-data" action="?next={{ next_url }}">
+            {% csrf_token %}
+            {% for field in form %}
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+            {% endfor %}
+            <div class="mb-2">
+                <br>
+                <button type="submit" class="btn btn-primary">დიახ</button>
+                <a href="{{ next_url }}" class="btn btn-secondary">არა</a>
+            </div>
+        </form>
+        </div>
+        <div class="mb-2">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        {% for key, value in table.0.items  %}
+                            <th>{{ key }}</th>
+                        {% endfor %}
+                        <th>...</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table  %}
+                        <tr>
+                            {% for key, value in row.items  %}
+                                {%  if key == 'label' %}
+                                    <td><a href="{% url 'lookup_table' table_name 'განახლება' value %}?next={{ next_url }}" class="btn btn-primary btn-sm">{{ value }}</a></td>
+                                {% else %}
+                                    <td>{{ value }}</td>
+                                {% endif %}
+                            {% endfor %}
+                            <td><a href="{% url 'lookup_table' table_name 'წაშლა' row.label %}?next={{ next_url }}" class="btn btn-danger btn-sm">წაშლა</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

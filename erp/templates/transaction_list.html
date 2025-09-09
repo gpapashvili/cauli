@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% load custom_tags %}
 <div class="container mt-4">
     <h2 class="align-middle text-center">{{ transaction_type }}</h2>
     <br>
@@ -13,15 +14,15 @@
         {% csrf_token %}
         <div class="mb-3 d-flex gap-2">
             <div class="mb-3">
-                <input type="date" class="form-control" name="from_date" value={{ model.creation_date|date:"y-m-d" }}>
-                <input type="date" class="form-control" name="to_date" value={{ model.creation_date|date:"y-m-d" }}>
+                <input type="date" class="form-control" id="from_date" name="from_date" value={{ model.creation_date|date:"y-m-d" }}>
+                <input type="date" class="form-control" id="to_date" name="to_date" value={{ model.creation_date|date:"y-m-d" }}>
             </div>
             <div class="mb-3">
                 <label class="form-label">ტრანზაქციის ტიპი</label>
                 {{ form.transaction_type }}
             </div>
             <div class="mb-3">
-                <label class="form-label" >პარტიის N</label>
+                <label class="form-label" >პარტ. N</label>
                 {{ form.lot_id }}
             </div>
             <div class="mb-3">
@@ -29,8 +30,12 @@
                 {{ form.item }}
             </div>
             <div class="mb-3">
-                <label class="form-label" >მასლ/მომსხ ტიპი</label>
+                <label class="form-label" >მასლ_ტიპი</label>
                 {{ form.item_type }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">კლიენტი</label>
+                {{ form.customer }}
             </div>
             <div class="mb-3">
                 <label class="form-label">ერთეული</label>
@@ -55,41 +60,41 @@
     <table class="table table-striped ">
         <thead>
             <tr class="table align-middle text-center">
-                <th>N <center><font style="font-size:0.75em; color:lightblue; align-content: center">{{ totals.tmstmp.count }}</font></center></th>
+                <th>N <span style="font-size:0.75em; color:lightblue; ">{{ totals.tmstmp.count }}</span></th>
                 <th>ტრანზაქციის დრო</th>
                 <th>ტრანზაქციის ტიპი</th>
-                <th>პრტ.N <center><font style="font-size:0.75em; color:lightblue; align-content: center">{{ totals.lot_id.count }}</font></center></th>
+                <th>პრტ.N <span style="font-size:0.75em; color:lightblue; ">{{ totals.lot_id.count }}</span></th>
                 <th>მასლ/მომსხ</th>
                 <th>მასლ/მომსხ ტიპი</th>
-                <th>რაოდენობა<center><font style="font-size:0.75em; color: Red">{{ totals.transaction_quantity.sum|floatformat:4 }}</font></center></th>
-                <th>ერთ.ფასი <center><font style="font-size:0.75em; color: Yellow">{{ totals.cost_unit.min|floatformat:2 }} {{ totals.cost_unit.max|floatformat:2 }}</font></center></th>
-                <th>სულ.ფასი <center><font style="font-size:0.75em; color: Red">{{ totals.total_cost.sum|floatformat:2 }}</font></center></th>
-                <th>ცალი<center><font style="font-size:0.75em; color: Red">{{ totals.pieces.sum|floatformat:2 }}</font></center></th>
-                <th>ცალ.ფასი
-                    <center><font style="font-size:0.75em; color: yellow">{{ totals.cost_piece.min|floatformat:2 }} {{ totals.cost_piece.max|floatformat:2 }}</font></center>
-                </th>
-                <th>ხარისხი <center><font style="font-size:0.75em; color: lightblue">{{ totals.stone_quality.count }}</font></center></th>
-                <th>ID <center><font style="font-size:0.75em; color:lightblue; align-content: center">{{ totals.description.count }}</font></center></th>
+                <th>კლიენტი</th>
+                <th>რაოდენობა <span style="font-size:0.75em; color:Red;">{{ totals.transaction_quantity.sum|floatformat:4 }}</span></th>
+                <th>ერთ.ფასი <span style="font-size:0.75em; color:Yellow;">{{ totals.cost_unit.min|floatformat:2 }} {{ totals.cost_unit.max|floatformat:2 }}</span></th>
+                <th>სულ.ფასი <span style="font-size:0.75em; color:Red;">{{ totals.total_cost.sum|floatformat:2 }}</span></th>
+                <th>ცალი <span style="font-size:0.75em; color:Red;">{{ totals.pieces.sum|floatformat:2 }}</span></th>
+                <th>ცალ.ფასი <span style="font-size:0.75em; color:yellow;">{{ totals.cost_piece.min|floatformat:2 }} {{ totals.cost_piece.max|floatformat:2 }}</span></th>
+                <th>ხარისხი <span style="font-size:0.75em; color:lightblue;">{{ totals.stone_quality.count }}</span></th>
+                <th>ID <br><span style="font-size:0.75em; color:lightblue;">{{ totals.description.count }}</span></th>
                 <th>...</th>
             </tr>
         </thead>
         <tbody>
             {% for transaction in transactions %}
             <tr>
-                <td class="text-center"><img src="/media/{{ transaction.image_location }}" alt={{ transaction.name|add:"1" }} title={{ transaction.name|add:"1" }} width="50" height="50"></td>
-                <td>{{ transaction.tmstmp }}</td>
-                <td class="text-center">{{ transaction.transaction_type }}</td>
-                <td class="text-center">{% if transaction.lot_id > 0 %}{{ transaction.lot_id|floatformat:0 }}{% endif %}</td>
+                <td><img src="/media/{{ transaction.image_location }}" alt={{ transaction.name|add:"1" }} title={{ transaction.name|add:"1" }} width="50" height="50"></td>
+                <td>{{ transaction.date }}</td>
+                <td>{{ transaction.transaction_type }}</td>
+                <td>{% if transaction.lot_id > 0 %}{{ transaction.lot_id|floatformat:0 }}{% endif %}</td>
                 <td><a href="{% url 'transaction_update' transaction.tmstmp transaction.item %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-primary">{{ transaction.item }}</a></td>
-                <td class="text-center">{% if transaction.item_type != None %}{{ transaction.item_type }}{% endif %}</td>
+                <td>{% if transaction.item_type != None %}{{ transaction.item_type }}{% endif %}</td>
+                <td>{% if transaction.customer != None %}{{ transaction.customer }}{% endif %}</td>
                 <td class="text-end">{{ transaction.transaction_quantity|floatformat:4 }} {{ transaction.transaction_quantity_unit }}</td>
                 <td class="text-end">{{ transaction.cost_unit|floatformat:2 }}</td>
                 <td class="text-end">{{ transaction.total_cost|floatformat:2 }}</td>
-                <td class="text-end">{% if transaction.pieces > 0 %}{{ transaction.pieces|floatformat:0 }}{% endif %}</td>
-                <td class="text-end">{% if transaction.cost_piece > 0 %}{{ transaction.cost_piece|floatformat:2 }}{% endif %}</td>
+                <td class="text-end">{% if not transaction.pieces|is_nan %}{{ transaction.pieces|floatformat:0 }}{% endif %}</td>
+                <td class="text-end">{% if not transaction.cost_piece|is_nan %}{{ transaction.cost_piece|floatformat:2 }}{% endif %}</td>
                 <td class="text-center">{% if transaction.stone_quality != None %}{{ transaction.stone_quality }}{% endif %}</td>
                 <td class="text-center">{% if transaction.description != None %}{{ transaction.description }}{% endif %}</td>
-                <td width="10%">
+                <td>
                     <div class="mb-3">
                         <a href="{% url 'transaction_delete' transaction.tmstmp transaction.item %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-danger">ტრანზაქციის წაშლა</a>
                     </div>

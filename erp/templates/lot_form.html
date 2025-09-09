@@ -5,8 +5,8 @@
 {% load custom_tags %}
 
 <div class="container mt-4">
-    {% if lotform.instance.lot_id %}
-        <h2> პარტია N <span style="color: Red">{{ lotform.instance.lot_id }}</span></h2>
+    {% if form.instance.lot_id %}
+        <h2> პარტია N <span style="color: Red">{{ form.instance.lot_id }}</span></h2>
     {% else %}
         <h2>{{ action }} პარტია</h2>
     {% endif %}
@@ -14,7 +14,7 @@
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="row">
-            {% for field in lotform %}
+            {% for field in form %}
                 <div class="col-md-2 mb-2 small">
                     <label for="{{ field.id_for_label }}" class="form-label small">{{ field.label }}</label>
                     {{ field }}
@@ -23,20 +23,20 @@
         </div>
         <button type="submit" class="btn btn-primary">{{ action }}</button>
         <a href="{% url 'lot_list' %}" class="btn btn-secondary">პარტიების სია</a>
-        {% if lotform.instance.lot_id %}
-            <a href="{% url 'lot_stone_totals' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-info">ქვების ჯამები</a>
-            <a href="{% url 'transaction_create' 'ჩამოსხმა' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-warning">ჩამოსხმა</a>
-            <a href="{% url 'transaction_create' 'დამუშავება' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-success">დამუშავება</a>
-            <a href="{% url 'auto_salary' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-danger">AUTO ხელფასი</a>
-            <a href="{% url 'transaction_create' 'ლოტის_გატარება' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-info">სხვა გატარება</a>
-            <a href="{% url 'transaction_create' 'ინფორმაცია' lotform.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-light">გატარებები</a>
+        {% if form.instance.lot_id %}
+            <a href="{% url 'lot_stone_totals' form.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-info">ქვების ჯამები</a>
+            <a href="{% url 'transaction_create' 'ჩამოსხმა' form.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-warning">ჩამოსხმა</a>
+            <a href="{% url 'transaction_create' 'დამუშავება' form.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-success">დამუშავება</a>
+            <a href="{% url 'auto_salary' form.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-danger">AUTO ხელფასი</a>
+            <a href="{% url 'transaction_create' 'პარტია' form.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-info">სხვა გატარება</a>
+            <a href="{% url 'transaction_create' 'ინფორმაცია' form.instance.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-light">გატარებები</a>
 
         {% endif %}
     </form>
 
     <hr>
 
-    <h2>პარტია N <span style="color: Red">{{ lotform.instance.lot_id }}</span>-ში შემავალი მოდელები</h2>
+    <h2>პარტია N <span style="color: Red">{{ form.instance.lot_id }}</span>-ში შემავალი მოდელები</h2>
     <table class="table table-striped">
         <thead class="align-middle">
             <tr>
@@ -45,21 +45,21 @@
                     უნიკ:<span style="color: lightblue">{{ lot_model_totals.unique|floatformat:0 }}</span>
                 </th>
                 <th>N<br></th>
-                <th>გაყიდ. <span style="color: lightblue">{{ lot_model_totals.sold|floatformat:0 }}</span></th>
+                <th>გაყიდ. <br><span style="color: lightblue">{{ lot_model_totals.sold|floatformat:0 }}</span></th>
                 <th>წონა <span style="color: red">{{ lot_model_totals.weight|floatformat:2 }}</span></th>
-                <th>ოქ.ღირ. <span style="color: Yellow">{{ lot_model_totals.cost_gram_gold|floatformat:2 }}</span></th>
-                <th>ოქ.ფას. <span style="color: Yellow">{{ lot_model_totals.price_gram_gold|floatformat:2 }}</span></th>
+                <th>ოქ.ღირ <span style="color: Yellow">{{ lot_model_totals.cost_gram_gold|floatformat:2 }}</span></th>
+                <th>ოქ.ფასი <span style="color: Yellow">{{ lot_model_totals.price_gram_gold|floatformat:2 }}</span></th>
                 <th>
-                    <center>ქვები</center>
+                    <div style="text-align: center;">ქვები</div>
                     წონა:<span style="color: red">{{ lot_model_totals.model_total_stone_weight|floatformat:4 }}</span>
                     რაოდ:<span style="color: lightblue">{{ lot_model_totals.model_total_stone_quantity|floatformat:0 }}</span>
                     ღირ:<span style="color: red">{{ lot_model_totals.model_total_stone_cost_piece|floatformat:0 }}</span>
                     ჩას:<span style="color: red">{{ lot_model_totals.model_total_stone_cost_manufacturing_stone|floatformat:0 }}</span>
                     მოგ:<span style="color: red">{{ lot_model_totals.model_total_stone_margin_stones|floatformat:0 }}</span>
                 </th>
-                <th>ღირებ. <span style="color: red">{{ lot_model_totals.model_total_cost|floatformat:0 }}</th>
-                <th>ფასი <span style="color: red">{{ lot_model_totals.model_total_price|floatformat:0 }}</th>
-                <th>მოგება <span style="color: red">{{ lot_model_totals.model_profit|floatformat:0 }}</th>
+                <th>ღირებ. <span style="color: red">{{ lot_model_totals.model_cost|floatformat:0 }}</span></th>
+                <th>ფასი <span style="color: red">{{ lot_model_totals.model_price|floatformat:0 }}</span></th>
+                <th>მოგება <span style="color: red">{{ lot_model_totals.model_profit|floatformat:0 }}</span></th>
                 <th>...</th>
             </tr>
         </thead>
@@ -68,26 +68,33 @@
             <tr>
                 <td><img src="/media/{{ lot_model.image_location }}" alt="უსურათო" width="200" height="200"></td>
                 <td>
-                    <a href="{% url 'lot_model_update' lotform.instance.lot_id lot_model.model_id  lot_model.tmstmp %}" class="btn btn-sm btn-primary">{{ lot_model.model_id }}</a>
+                    <a href="{% url 'lot_model_update' form.instance.lot_id lot_model.model_id  lot_model.tmstmp %}" class="btn btn-sm btn-primary">{{ lot_model.model_id }}</a>
                 </td>
                 <td>
-                    {% if lot_model.sold  %}
-                        <input type="checkbox" checked disabled>
+                    {% if lot_model.location == 'გაყიდული'  %}
+                        <label for="id_location" class="form-label"></label>
+                        <input id='id_location' type="checkbox" checked disabled>
                     {% else %}
-                        <a href="{% url 'lot_model_sold' lotform.instance.lot_id lot_model.model_id lot_model.tmstmp %}" class="btn btn-sm btn-success">{{ lot_model.location }}</a>
+                        <a href="{% url 'lot_model_sold' form.instance.lot_id lot_model.model_id lot_model.tmstmp %}" class="btn btn-sm btn-success">{{ lot_model.location }}</a>
                     {% endif %}
                 </td>
-                <td>{{ lot_model.weight }}</td>
+                <td>
+                    {% if lot_model.weight|is_nan  %}
+                        <a href="{% url 'lot_model_update' form.instance.lot_id lot_model.model_id  lot_model.tmstmp %}" class="btn btn-sm btn-warning">{{ lot_model.weight }}</a>
+                    {% else %}
+                        {{ lot_model.weight }}
+                    {% endif %}
+                </td>
                 <td>
                     {% if lot_model.cost_gram_gold|is_nan %}
-                        <a href="{% url 'lot_model_cost_default_update' lotform.instance.lot_id lot_model.model_id lot_model.tmstmp 'cost_gram_gold' %}?next=/lot/{{ lotform.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ lot_model.cost_gram_gold }}</a>
+                        <a href="{% url 'lot_model_cost_default_update' form.instance.lot_id lot_model.model_id lot_model.tmstmp 'cost_gram_gold' %}?next=/lot/{{ form.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ lot_model.cost_gram_gold }}</a>
                     {% else %}
                         {{ lot_model.cost_gram_gold }}
                     {% endif %}
                 </td>
                 <td>
                     {% if lot_model.price_gram_gold|is_nan %}
-                        <a href="{% url 'lot_model_cost_default_update' lotform.instance.lot_id lot_model.model_id lot_model.tmstmp 'price_gram_gold' %}?next=/lot/{{ lotform.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ lot_model.price_gram_gold }}</a>
+                        <a href="{% url 'lot_model_cost_default_update' form.instance.lot_id lot_model.model_id lot_model.tmstmp 'price_gram_gold' %}?next=/lot/{{ form.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ lot_model.price_gram_gold }}</a>
                     {% else %}
                         {{ lot_model.price_gram_gold }}
                     {% endif %}
@@ -110,51 +117,51 @@
                                     <td>{{ stone.quantity }}</td>
                                     <td>
                                         {% if stone.total_cost_piece|is_nan %}
-                                            <a href="{% url 'lot_model_stone_default_update' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'cost_piece' %}?next=/lot/{{ lotform.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ stone.total_cost_piece }}</a>
+                                            <a href="{% url 'lot_model_stone_default_update' form.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'cost_piece' %}?next=/lot/{{ form.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ stone.total_cost_piece }}</a>
                                         {% else %}
                                             {{ stone.total_cost_piece }}
                                         {% endif %}
                                     </td>
                                     <td>
                                         {% if stone.total_cost_manufacturing_stone|is_nan %}
-                                            <a href="{% url 'lot_model_stone_default_update' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'cost_manufacturing_stone' %}?next=/lot/{{ lotform.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ stone.total_cost_manufacturing_stone }}</a>
+                                            <a href="{% url 'lot_model_stone_default_update' form.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'cost_manufacturing_stone' %}?next=/lot/{{ form.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ stone.total_cost_manufacturing_stone }}</a>
                                         {% else %}
                                             {{ stone.total_cost_manufacturing_stone }}
                                         {% endif %}
                                     </td>
                                   <td>
                                         {% if stone.total_margin_stones|is_nan %}
-                                            <a href="{% url 'lot_model_stone_default_update' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'margin_stones' %}?next=/lot/{{ lotform.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ stone.total_margin_stones }}</a>
+                                            <a href="{% url 'lot_model_stone_default_update' form.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name 'margin_stones' %}?next=/lot/{{ form.instance.lot_id }}/update/" class="btn btn-sm btn-warning">{{ stone.total_margin_stones }}</a>
                                         {% else %}
                                             {{ stone.total_margin_stones }}
                                         {% endif %}
                                     </td>
                                      <td style="white-space: nowrap;">
-                                        <a href="{% url 'lot_model_stone_change' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name %}" class="btn btn-sm btn-secondary">შც</a>
-                                        <a href="{% url 'lot_model_stone_delete' lotform.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name %}" class="btn btn-sm btn-danger">წ</a>
+                                        <a href="{% url 'lot_model_stone_change' form.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name %}" class="btn btn-sm btn-secondary">შც</a>
+                                        <a href="{% url 'lot_model_stone_delete' form.instance.lot_id lot_model.model_id stone.tmstmp stone.stone_full_name %}" class="btn btn-sm btn-danger">წ</a>
                                     </td>
                                 </tr>
                         {% endfor %}
                     </table>
                 </td>
-                <td>{{ lot_model.model_total_cost }}</td>
-                <td>{{ lot_model.model_total_price }}</td>
+                <td>{{ lot_model.model_cost }}</td>
+                <td>{{ lot_model.model_price }}</td>
                 <td>
                     {% if lot_model.model_profit < 0 %}
-                        <a href="{% url 'lot_model_update' lotform.instance.lot_id lot_model.model_id  lot_model.tmstmp %}" class="btn btn-sm btn-danger">{{ lot_model.model_profit }}</a>
+                        <a href="{% url 'lot_model_update' form.instance.lot_id lot_model.model_id  lot_model.tmstmp %}" class="btn btn-sm btn-danger">{{ lot_model.model_profit }}</a>
                     {% else %}
                         {{ lot_model.model_profit }}
                     {% endif %}
                 </td>
-                <td width="10%">
+                <td>
                     <div class="mb-3">
-                        <a href="{% url 'model_2_lot_add' lot_model.model_id lotform.instance.lot_id %}" class="btn btn-sm btn-secondary">წარმოებაში დუბლირება</a>
+                        <a href="{% url 'model_2_lot_add' lot_model.tmstmp lot_model.lot_id %}" class="btn btn-sm btn-secondary">წარმოებაში დუბლირება</a>
                     </div>
                     <div class="mb-3">
-                        <a href="{% url 'lot_model_stone_add' lotform.instance.lot_id lot_model.model_id lot_model.tmstmp %}" class="btn btn-sm btn-primary">ქვის დამატება</a>
+                        <a href="{% url 'lot_model_stone_add' form.instance.lot_id lot_model.model_id lot_model.tmstmp %}" class="btn btn-sm btn-primary">ქვის დამატება</a>
                     </div>
                     <div class="mb-3">
-                        <a href="{% url 'lot_model_delete' lotform.instance.lot_id lot_model.model_id lot_model.tmstmp %}" class="btn btn-sm btn-danger">მოდელის წაშლა</a>
+                        <a href="{% url 'lot_model_delete' form.instance.lot_id lot_model.model_id lot_model.tmstmp %}" class="btn btn-sm btn-danger">მოდელის წაშლა</a>
                     </div>
                 </td>
             </tr>

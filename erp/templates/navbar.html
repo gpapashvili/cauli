@@ -19,12 +19,15 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url 'catalog' %}">კატალოგი</a>
         </li>
+
         <li class="nav-item">
           <a class="nav-link" href="{% url 'lot_list' %}">წარმოება</a>
         </li>
+
         <li class="nav-item">
           <a class="nav-link" href="{% url 'customer_list' %}">გაყიდვები</a>
         </li>
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle"
              href="#" id="navbarDropdown"
@@ -50,35 +53,30 @@
             დამხმარე სიები
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="{% url 'admin:erp_stones_changelist' %}">ქვები</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_metals_changelist' %}">მეტალები</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'stones' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">ქვები</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'metals' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">მეტალები</a></li>
+            <li><a class="dropdown-item" href="{% url 'customer_list' %}">კლიენტები</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_masters_changelist' %}">ხელოსნები</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_customers_changelist' %}">კლიენტები</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_genders_changelist' %}">სქესი</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_modelcategories_changelist' %}">მოდელის კატეგორია</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_stonenames_changelist' %}">ქვის სახელები</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_stonequalities_changelist' %}">ქვის ხარისხი</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_units_changelist' %}">ერთეულები</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_itemtypes_changelist' %}">მომსახურების და მასალების ტიპები</a></li>
-            <li><a class="dropdown-item" href="{% url 'admin:erp_transactiontypes_changelist' %}">ტრანზაქციის ტიპები</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'assets' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">სხვა აქტივები</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'item_types' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">აქტივის ტიპი/დანიშნულება</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'units' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">ერთეულები</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'model_categories' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">მოდელის კატეგორია</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'product_location' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">პროდუქტის მდებარეობა</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'genders' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">სქესი</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'transaction_types' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">ტრანზაქციის ტიპები</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'stone_names' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">ქვის სახელები</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'stone_qualities' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">ქვის ხარისხი</a></li>
+            <li><a class="dropdown-item" href="{% url 'lookup_table' 'masters' 'ახალი' ' ' %}?next={{ request.path|urlencode }}">ხელოსნები</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'admin:index' %}">ადმინისტრირება</a></li>
+            <li><a class="dropdown-item" href="{% url 'admin:index' %}">ყველა სია</a></li>
           </ul>
         </li>
-
-        <li class="nav-item">
-            <a class="nav-link disabled">Disabled</a>
-        </li>
-
-
       </ul>
 
       <form class="d-flex" role="search">
         <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
         <button class="btn btn-outline-success" type="submit">ძებნა</button>
       </form>
-
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
               {% if user.is_authenticated %}
@@ -88,13 +86,11 @@
               {% endif %}
           </li>
       </ul>
-
       <ul class="navbar-nav">
           <li>
               <a class="nav-link" href="#" id="themeToggle">ფერი</a>
           </li>
       </ul>
-
     </div>
   </div>
 </nav>

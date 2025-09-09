@@ -14,38 +14,49 @@ urlpatterns = [
     # catalog
     path('catalog/', views.catalog, name='catalog'),
     path('model/create/', views.model_create, name='model_create'),
-    path('model/<str:model_id>/update', views.model_update, name='model_update'),
-    path('model/<str:model_id>/delete', views.model_delete, name='model_delete'),
-    path('model/<str:model_id>/stone_add', views.model_stone_add, name='model_stone_add'),
-    path('model/<str:model_id>/<str:stone_full_name>/stone_delete', views.model_stone_delete, name='model_stone_delete'),
-    path('model/<str:model_id>/<int:lot_id>/2_lot_add', views.model_2_lot_add, name='model_2_lot_add'),
+    path('model/<str:model_id>/update/', views.model_update, name='model_update'),
+    path('model/<str:model_id>/delete/', views.model_delete, name='model_delete'),
+    path('model/<str:model_id>/stone_add/', views.model_stone_add, name='model_stone_add'),
+    path('model/<str:model_id>/<str:stone_full_name>/stone_delete/', views.model_stone_delete, name='model_stone_delete'),
+    path('model/<str:model_id>/<int:lot_id>/2_lot_add/', views.model_2_lot_add, name='model_2_lot_add'),
+
 
     # lot
     path('lot/', views.lot_list, name='lot_list'),
     path('lot/create/', views.lot_create, name='lot_create'),
     path('lot/<int:lot_id>/update/', views.lot_update, name='lot_update'),
-    path('lot/<int:lot_id>/delete', views.lot_delete, name='lot_delete'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_update', views.lot_model_update, name='lot_model_update'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_sold', views.lot_model_sold, name='lot_model_sold'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_delete', views.lot_model_delete, name='lot_model_delete'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_stone_add', views.lot_model_stone_add, name='lot_model_stone_add'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/model_stone_change', views.lot_model_stone_change, name='lot_model_stone_change'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/model_stone_delete', views.lot_model_stone_delete, name='lot_model_stone_delete'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:field>/lot_model_cost_default_update',views.lot_model_cost_default_update, name='lot_model_cost_default_update'),
-    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/<str:field>/lot_model_stone_default_update', views.lot_model_stone_default_update, name='lot_model_stone_default_update'),
+    path('lot/<int:lot_id>/delete/', views.lot_delete, name='lot_delete'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_update/', views.lot_model_update, name='lot_model_update'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_sold/', views.lot_model_sold, name='lot_model_sold'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_return/', views.lot_model_return, name='lot_model_return'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_delete/', views.lot_model_delete, name='lot_model_delete'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/model_stone_add/', views.lot_model_stone_add, name='lot_model_stone_add'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/model_stone_change/', views.lot_model_stone_change, name='lot_model_stone_change'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/model_stone_delete/', views.lot_model_stone_delete, name='lot_model_stone_delete'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:field>/lot_model_cost_default_update/',views.lot_model_cost_default_update, name='lot_model_cost_default_update'),
+    path('lot/<int:lot_id>/<str:model_id>/<str:tmstmp>/<str:stone_full_name>/<str:field>/lot_model_stone_default_update/', views.lot_model_stone_default_update, name='lot_model_stone_default_update'),
     path('lot/<int:lot_id>/stone_totals/', views.lot_stone_totals, name='lot_stone_totals'),
+    path('lot/<str:stone_full_name>/<str:quantity>/<str:total_weight>/<str:weight_unit>/<str:total_cost_piece>/<str:lot_id>/stone_withdrawal/', views.lot_stone_withdrawal, name='lot_stone_withdrawal'),
+
 
     # customers
     path('customer_list/', views.customer_list, name='customer_list'),
+    path('customer/create/', views.customer_create, name='customer_create'),
+    path('customer/<str:full_name>/delete/', views.customer_delete, name='customer_delete'),
     path('customer/<str:full_name>/details/', views.customer_details, name='customer_details'),
+
 
     # transaction
     path('transaction_list/', views.transaction_list, name='transaction_list'),
     path('transaction_list/<str:transaction_type>/transaction_type/', views.transaction_list, name='transaction_type'),
     path('transaction/<str:transaction_identifier>/<int:lot_id>/create/', views.transaction_create, name='transaction_create'),
     path('transaction/<str:tmstmp>/<str:item>/update/', views.transaction_update, name='transaction_update'),
-    path('transaction/<str:tmstmp>/<str:item>/delete', views.transaction_delete, name='transaction_delete'),
-    path('transaction/<int:lot_id>/auto_salary', views.auto_salary, name='auto_salary'),
+    path('transaction/<str:tmstmp>/<str:item>/delete/', views.transaction_delete, name='transaction_delete'),
+    path('transaction/<int:lot_id>/auto_salary/', views.auto_salary, name='auto_salary'),
+
+
+    # lookup tables
+    path('lookup_table/<str:table_name>/<str:action>/<str:label>/', views.lookup_table, name='lookup_table'),
 
 
     # other

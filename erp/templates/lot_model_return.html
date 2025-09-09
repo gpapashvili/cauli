@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>დარწმუნებული ხარ რომ <span style="color: darkred">{{ full_name }}</span> აბრუნებს {{ model_id }} მოდელს?</h2>
+    <br>
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <img src="/media/{{ image_location }}" alt="უსურათო" width="200" height="200">
+        </div>
+        <div class="col mb-3 gap-4">
+        <form method="post">
+            {% csrf_token %}
+            <label for="price" class="col-sm-4 col-form-label">დასაბრუნებელი თანხა</label>
+            <input type="number" class="form-control" id="price" name="price" size="3" value={{ price }}>
+            <br>
+            <label for="return_money" class="col-sm-4 col-form-label">ფულის დაბრუნების გატარება</label>
+            <input type="checkbox" id="return_money" name="return_money" value="1">
+            <br><br>
+            <button type="submit" class="btn btn-danger">დიახ</button>
+            <a href="{% url 'customer_details' full_name %}" class="btn btn-secondary">არა</a>
+        </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

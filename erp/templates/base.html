@@ -1,17 +1,18 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 
   <head>
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Django CRM</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-          rel="stylesheet"
-          integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr"
-          crossorigin="anonymous">
-    <link rel="stylesheet"
-          href="styles.css">
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Django CRM</title>
+{#      css from static folder#}
+        <link href="{% static '/erp/bootstrap/dist/css/bootstrap.min.css' %}" rel="stylesheet">
+{#      this is bootstrap from inet if something goes wrong with static folder#}
+{#      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"#}
+{#            rel="stylesheet"#}
+{#            integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"#}
+{#            crossorigin="anonymous">#}
 
   </head>
 
@@ -36,11 +37,14 @@
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
-            crossorigin="anonymous"></script>
-    <script src="main.js"></script>
+{#    bootstrap from static folder #}
+    <script src="{% static '/erp/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+{#  this is bootstrap from inet if something goes wrong with static folder#}
+{#  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"#}
+{#        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"#}
+{#        crossorigin="anonymous"></script>#}
 
+{#    this is for dark and white mode#}
     <script>
         document.getElementById('themeToggle').addEventListener('click', function() {
             const html = document.documentElement;
@@ -57,4 +61,5 @@
     </script>
 
   </body>
+
 </html>

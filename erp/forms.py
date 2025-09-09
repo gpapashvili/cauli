@@ -1,39 +1,5 @@
-from importlib.metadata import requires
-
 from django import forms
-from .models import *
-
-
-class CatalogListForm(forms.Form):
-    select_model_id = forms.ModelChoiceField(
-        queryset=Catalog.objects.all(),
-        empty_label="აირჩიე მოდელი",
-        widget=forms.Select,
-        label='მოდელი',
-        required=False,
-    )
-
-
-class ModelCategoryListForm(forms.Form):
-    # ... your existing fields ...
-    model_category = forms.ModelChoiceField(
-        queryset=ModelCategories.objects.all(),
-        empty_label="აირჩიე კატეგორია",
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='კატეგორია',
-        required=False,
-    )
-
-
-class GenderListForm(forms.Form):
-    # ... your existing fields ...
-    gender = forms.ModelChoiceField(
-        queryset=Genders.objects.all(),
-        empty_label="აირჩიე სქესი",
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='სქესი',
-        required=False,
-    )
+from .models import Lots, Catalog, CatalogStones,LotModels, LotModelStones, Stones, Assets, Transactions, Customers, Metals
 
 
 class LotListForm(forms.Form):
@@ -42,8 +8,86 @@ class LotListForm(forms.Form):
         empty_label="აირჩიე პარტია",
         widget=forms.Select,
         label='პარტია',
-        required=False,
+        required=True,
     )
+
+
+class MetalsForm(forms.ModelForm):
+    class Meta:
+        model = Metals
+        fields = [
+            'metal_name',
+            'sinji',
+            'note',
+        ]
+        widgets = {
+            'metal_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'sinji': forms.NumberInput(attrs={'class': 'form-control'}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'metal_name': 'მეტალი',
+            'sinji': 'სინჯი',
+            'note': 'კომენტარი',
+        }
+
+
+class StonesForm(forms.ModelForm):
+    class Meta:
+        model = Stones
+        fields = [
+            'stone_name',
+            'size',
+            'size_unit',
+            'weight',
+            'weight_unit',
+            'note',
+        ]
+        widgets = {
+            'stone_name': forms.Select(attrs={'class': 'form-control'}),
+            'size': forms.TextInput(attrs={'class': 'form-control'}),
+            'size_unit': forms.Select(attrs={'class': 'form-control'}),
+            'weight': forms.NumberInput(attrs={'class': 'form-control'}),
+            'weight_unit': forms.Select(attrs={'class': 'form-control'}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+        labels = {
+            'stone_name': 'ქვა',
+            'size': 'ზომა',
+            'size_unit': 'ზომის ერთეული',
+            'weight': 'წონა',
+            'weight_unit': 'წონის ერთეული',
+            'note': 'კომენტარი',
+        }
+
+
+class CustomerForm(forms.ModelForm):
+    class Meta:
+        model = Customers
+        fields = [
+            'full_name',
+            'phone',
+            'table_number',
+            'id',
+            'address',
+            'note',
+        ]
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
+            'table_number': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
+            'id': forms.TextInput(attrs={'class': 'form-control', 'size': 2}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'size': 2, 'rows': 3}),
+            'note': forms.Textarea(attrs={'class': 'form-control', 'size': 2, 'rows': 4}),
+        }
+        labels = {
+            'full_name': 'გვარი-სახელი',
+            'phone': 'ტელეფონი',
+            'table_number': 'დახლის N',
+            'id': 'პირადი N',
+            'address': 'მისამართი',
+            'note': 'კომენტარი'
+        }
 
 
 class CatalogForm(forms.ModelForm):
@@ -146,7 +190,7 @@ class LotForm(forms.ModelForm):
             'cost_plating': 'როდირება',
             'cost_sinji': 'სინჯი',
             'margin_stones': 'მოგება.ქვაზე',
-            'price_gram_gold': 'გრამის გასაყიდი ფასი',
+            'price_gram_gold': 'გრ. ოქროს გასაყ. ფასი',
             'note': 'კომენტარი'
         }
 
@@ -159,10 +203,11 @@ class LotModelsForm(forms.ModelForm):
             'model_id',
             'tmstmp',
             'weight',
-            'customer',
-            'location',
             'cost_gram_gold',
             'price_gram_gold',
+            'customer',
+            'location',
+            'sale_date',
             'note',
         ]
         widgets = {
@@ -171,6 +216,7 @@ class LotModelsForm(forms.ModelForm):
             'tmstmp': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'weight': forms.NumberInput(attrs={'class': 'form-control'}),
             'customer': forms.Select(attrs={'class': 'form-control'}),
+            'sale_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'location': forms.Select(attrs={'class': 'form-control'}),
             'cost_gram_gold': forms.NumberInput(attrs={'class': 'form-control'}),
             'price_gram_gold': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -179,12 +225,13 @@ class LotModelsForm(forms.ModelForm):
         labels = {
             'lot_id': 'პარტიის ნომერი',
             'model_id': 'მოდელის ნომერი',
-            'tmstmp': 'ტაგი დრო',
+            'tmstmp': 'თარიღი',
             'weight': 'ბეჭდის წონა',
             'customer': 'მყიდველი',
+            'sale_date': 'გაყიდვის თარიღი',
             'location': 'პროდუქტის მდებარეობა',
-            'cost_gram_gold': 'გრამის ღირებულება',
-            'price_gram_gold': 'გრამის გასაყიდი ფასი',
+            'cost_gram_gold': 'გრ. ოქროს ღირებულება',
+            'price_gram_gold': 'გრ. ოქროს გასაყიდი ფასი',
             'note': 'კომენტარი',
         }
 
@@ -193,6 +240,7 @@ class LotModelStonesForm(forms.ModelForm):
     class Meta:
         model = LotModelStones
         fields = [
+            'installed',
             'stone_full_name',
             'quantity',
             'cost_piece',
@@ -201,6 +249,7 @@ class LotModelStonesForm(forms.ModelForm):
             'note',
         ]
         widgets = {
+            'installed': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'true'}),
             'stone_full_name': forms.Select(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
             'cost_piece': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -209,6 +258,7 @@ class LotModelStonesForm(forms.ModelForm):
             'note': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
         }
         labels = {
+            'installed': 'დაყენებული',
             'stone_full_name': 'ქვის სახელი და ზომა',
             'quantity': 'ქვების რაოდენობა მოდელში',
             'cost_piece': 'ქვის ღირებულება',
@@ -228,7 +278,7 @@ class AddTransactionForm(forms.ModelForm):
                         sorted([(m.metal_full_name, m.metal_full_name) for m in Metals.objects.all()]) +
                         sorted([(f'{m.metal_full_name} დანაკარგი', f'{m.metal_full_name} დანაკარგი') for m in Metals.objects.all()]) +
                         [('', '---სხვა---')] +
-                        sorted([(ms.label, ms.label) for ms in MaterialsServices.objects.all()]),
+                        sorted([(ms.label, ms.label) for ms in Assets.objects.all()]),
         widget=forms.Select(attrs={'class': 'form-control'}),
         label='აქტივი'
                             )
@@ -275,7 +325,7 @@ class AddTransactionForm(forms.ModelForm):
             'description': 'იდენტიფიკატორი',
             'lot_id': 'პარტიის N',
             'customer': 'კლიენტი',
-            'transaction_quantity': 'რაოდენობა',
+            'transaction_quantity': 'რაოდენობა/თანხა',
             'transaction_quantity_unit': 'ერთეული',
             'pieces': 'ცალობა',
             'stone_quality': 'ხარისხი (ქვის)',

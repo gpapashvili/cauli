@@ -9,7 +9,7 @@ class FullAuthMiddleware:
         self.allowed_paths = ['/login_user/', ] # '/logout_user/', '/admin/', '/static/', '/media/,
 
     def __call__(self, request):
-        """Will check if user us authenticated and db is connected"""
+        """Will check if the user is authenticated and db is connected"""
 
         if request.path.startswith(tuple(self.allowed_paths)):
             return self.get_response(request)

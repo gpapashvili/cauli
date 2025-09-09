@@ -1,27 +1,24 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    {% load custom_tags %}
 <div class="container mt-4">
     <h2>სრული კატალოგი</h2>
     <a href="{% url 'model_create' %}" class="btn btn-primary mb-3">დაამატე ახალი მოდელი</a>
 
-    <table class="table table-striped ">
+    <table class="table table-striped">
         <thead>
-            <tr class="table align-middle">
-                <th>სურათი</th>
-                <th>მოდელის N</th>
-                <th>სახელი</th>
-                <th>
-                    <table class="table table-sm">
-                        <tr>
-                          <th>ქვის სახელი_ზომა</th>
-                          <th>წონა სულ</th>
-                          <th>წონა ერთ</th>
-                          <th>ცალ.</th>
-                          <th>წაშლა</th>
-                        </tr>
-                    </table>
-                </th>
+            <tr class="table">
+                <th>სურათი <br><span style="color: lightblue">{{ totals.image_count }}</span></th>
+                <th>მოდელის N <br><span style="color: lightblue">{{ totals.model_count }}</span></th>
+                <th>სახელი <br><span style="color: lightblue">{{ totals.name_count }}</span></th>
+                <th>ნაჭრები <br><span style="color: red">{{ totals.total_pieces }}</span></th>
+                <th>კატეგ. <br><span style="color: lightblue">{{ totals.model_category_count }}</span></th>
+{#            some statistical information from produced models#}
+                <th>წონა</th>
+{#                <th>ფასი</th>#}
+{#                <th>მოგება</th>#}
+                <th>ქვები</th>
                 <th>...</th>
             </tr>
         </thead>
@@ -31,10 +28,34 @@
                 <td><img src="/media/{{ model.image_location }}" alt="უსურათო" width="200" height="200"></td>
                 <td><a href="{% url 'model_update' model.model_id %}" class="btn btn-sm btn-primary">{{ model.model_id }}</a></td>
                 <td>{{ model.model_name }}</td>
+                <td>{{ model.pieces }}</td>
+                <td>{{ model.model_category }}</td>
+{#            some statistical information from produced models#}
                 <td>
-                  <table class="table table-striped table-sm">
-                      {% for stone in all_model_stones %}
-                          {% if stone.model_id == model.model_id %}
+                    {% if not model.avg_weight|is_nan %}
+                        {{ model.avg_weight|floatformat:2 }}
+                    {% endif %}
+                </td>
+{#                <td>#}
+{#                    {% if not model.avg_price|is_nan %}#}
+{#                        {{ model.avg_price|floatformat:2 }}#}
+{#                    {% endif %}#}
+{#                </td>#}
+{#                <td>#}
+{#                    {% if not model.avg_profit|is_nan %}#}
+{#                        {{ model.avg_profit|floatformat:2 }}#}
+{#                    {% endif %}#}
+{#                </td>#}
+                <td>
+                    <table class="table table-striped table-sm">
+                        <tr>
+                          <th>ქვა</th>
+                          <th>წონ.სულ</th>
+                          <th>წონ.ერთ</th>
+                          <th>ცალი</th>
+                          <th>...</th>
+                        </tr>
+                        {% for stone in model.stones %}
                             <tr>
                               <td>{{ stone.stone_full_name }}</td>
                               <td>{{ stone.total_weight }}</td>
@@ -42,11 +63,10 @@
                               <td>{{ stone.quantity | floatformat:"0" }}</td>
                               <td><a href="{% url 'model_stone_delete' model.model_id stone.stone_full_name %}" class="btn btn-sm btn-danger">წ</a></td>
                             </tr>
-                          {% endif %}
-                      {% endfor %}
-                  </table>
+                        {% endfor %}
+                    </table>
                 </td>
-                <td width="10%">
+                <td style=width:10%>
                     <div class="mb-3">
                         <a href="{% url 'model_2_lot_add' model.model_id '0' %}" class="btn btn-sm btn-secondary">წარმოებაში დამატება</a>
                     </div>

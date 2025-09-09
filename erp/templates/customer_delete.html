@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>დარწმუნებული ხარ რომ გინდა წაშალო მომხმარებელი {{ customer.full_name }}?</h2>
+    <br>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">დიახ</button>
+        <a href="{% url 'customer_details' customer.full_name %}" class="btn btn-secondary">არა</a>
+    </form>
+</div>
+{% endblock %}

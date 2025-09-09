@@ -54,8 +54,8 @@ class ItemTypesAdmin(admin.ModelAdmin):
     list_display = ['label', "note"]
 
 
-@admin.register(MaterialsServices)
-class MaterialsServicesAdmin(admin.ModelAdmin):
+@admin.register(Assets)
+class AssetsAdmin(admin.ModelAdmin):
     list_display = ['label', "note"]
 
 
@@ -76,18 +76,10 @@ class CustomersAdmin(admin.ModelAdmin):
 class MetalsAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Metals._meta.fields]
 
-    def full_name(self, obj):
-        return f"{obj.metal_name}-{obj.sinji}"
-    full_name.short_description = "full_name"
-
 
 @admin.register(Stones)
 class StonesAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Stones._meta.fields]
-
-    def full_name(self, obj):
-        return f"{obj.stone_name}-{obj.size}"
-    full_name.short_description = "full_name"
 
 
 ######################functional tables can be managed from admin but preferred to have custom form#################

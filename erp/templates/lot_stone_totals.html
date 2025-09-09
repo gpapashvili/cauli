@@ -2,40 +2,47 @@
 
 {% block content %}
 {% load custom_tags %}
-    <td><a class="btn btn-sm btn-secondary" href="{{ next_url }}" title="უკან">უკან</a></td>
+    <a class="btn btn-sm btn-secondary" href="{{ next_url }}" title="უკან">უკან</a>
     {% for header_table in summary_tables %}
         <br>
         {% for header, table in header_table.items %}
-            <center><h3>{{ header }}</h3></center>
+            <div style="text-align: center;"><h3>{{ header }}</h3></div>
             <br>
                 <table class="table table-striped table-hover table-sm">
                     <tbody>
                         {% for row in table  %}
-                            {% if row.err == 'Err' %}
+                            {% if row.err == 'Err' and header|slice:"9:21" == 'დასამზადებელ'  %}
                                 <tr class="table-danger">
-                                    {% for name, item in row.items %}
-                                        {% if item == 'NA' or item|is_nan %}
+                                    {% for name, value in row.items %}
+                                        {% if value|is_nan %}
                                             {% if name == 'weight_unit' %}
-                                                <td><a class="btn btn-sm btn-warning" href="{% url 'admin:erp_stones_changelist' %}?next={{ request.path|urlencode }}" title="გასწორება">{{ item }}</a></td>
+                                                <td><a class="btn btn-sm btn-warning" href="{% url 'admin:erp_stones_changelist' %}?next={{ request.path|urlencode }}" title="ერთეულის გასწორება">{{ value }}</a></td>
+                                            {% elif name == 'total_cost_piece' %}
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'total_cost_piece' %}" class="btn btn-sm btn-warning" title="ქვის ფასის შევსება">{{ value }}</a></td>
+                                            {% elif name == 'total_cost_manufacturing_stone' %}
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'total_cost_manufacturing_stone' %}" class="btn btn-sm btn-warning" title="ჩასმის ფასის შევსება">{{ value }}</a></td>
+                                            {% elif name == 'total_margin_stones' %}
+                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'total_margin_stones' %}" class="btn btn-sm btn-warning" title="მოგების შევსება">{{ value }}</a></td>
+                                            {% elif name == 'pieces' %}
+                                                <td><a href="{% url 'transaction_create' 'ქვის_შესყიდვა' 0 %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-warning" title="ქვის შესყიდვა">{{ value }}</a></td>
+                                            {% else %}
+                                                <td>{{ value }}</td>
                                             {% endif %}
-                                            {% if name == 'cost_piece' %}
-                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_piece' %}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
-                                            {% endif %}
-                                            {% if name == 'cost_manufacturing_stone' %}
-                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'cost_manufacturing_stone' %}" title="ყველას შევსება">{{ item }}</a></td>
-                                            {% endif %}
-                                            {% if name == 'margin_stones' %}
-                                                <td><a href="{% url 'lot_model_stone_default_update' row.lot_id 'all' 'all' row.stone_full_name 'margin_stones' %}" class="btn btn-sm btn-warning" title="ყველას შევსება">{{ item }}</a></td>
-                                            {% endif %}
+                                        {% elif name == 'pieces' and row.pieces < row.quantity  %}
+                                            <td><a href="{% url 'transaction_create' 'ქვის_შესყიდვა' row.lot_id %}?next={{ request.path|urlencode }}" class="btn btn-sm btn-warning" title="ქვის შესყიდვა">{{ value }}</a></td>
                                         {% else %}
-                                            <td>{{ item }}</td>
+                                            <td>{{ value }}</td>
                                         {% endif %}
                                     {% endfor %}
                                 </tr>
                             {% else %}
                                 <tr>
                                     {% for item in row %}
-                                        <td>{{ item }}</td>
+                                        {% if item == 'ჩამოწ.' %}
+                                                <td><a href="{% url 'lot_stone_withdrawal' row.stone_full_name row.quantity row.total_weight row.weight_unit row.total_cost_piece row.lot_id %}" class="btn btn-sm btn-danger" title="ჩამოწერა საწყობიდან">ჩამოწ.</a></td>
+                                        {% else %}
+                                            <td>{{ item }}</td>
+                                        {% endif %}
                                     {% endfor %}
                                 </tr>
                             {% endif %}
@@ -44,9 +51,12 @@
                 </table>
             {% endfor %}
     {% endfor %}
-    <ul><span style="background-color: yellow; color: black">Err ნიშნავს</span>
-        <li>საწყობში არ არის საკმარისი რაოდენობა</li>
-        <li>ფასები არ არის შეყვანილი სრულად</li>
-        <li>არ ემთხვევა ერთეული</li>
-    </ul>
+    <div>
+        <span style="background-color: yellow; color: black">Err ნიშნავს</span>
+        <ul>
+            <li>საწყობში არ არის საკმარისი რაოდენობა</li>
+            <li>ფასები არ არის შეყვანილი სრულად</li>
+            <li>არ ემთხვევა ერთეული</li>
+        </ul>
+    </div>
 {% endblock %}

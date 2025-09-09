@@ -2,21 +2,22 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>კლიენტები</h2>
-    <a href="{% url 'admin:erp_customers_changelist' %}" class="btn btn-primary mb-3">დაამატე ახალი მყიდველი</a>
+    <h2>მომოხმარებლების სია</h2>
+    <a href="{% url 'customer_create' %}" class="btn btn-primary mb-3">ახალი მომოხმარებელი</a>
 
     <table class="table table-striped ">
         <thead>
             <tr class="table align-middle">
-                <th>გვარი სახელი</th>
+                <th>გვარი_სახელი</th>
                 <th>ტელეფონი</th>
                 <th>მდებარეობა</th>
-                <th>ნაყიდი რაოდენობა</th>
-                <th>ნაღიდი მოდელების წონა</th>
-                <th>ნაყიდი ქვების წონა</th>
-                <th>ნაყიდი ქვების რაოდენობა</th>
+                <th>მოდელების რაოდენობა</th>
+                <th>მოდელების წონა</th>
+                <th>ქვების რაოდენობა</th>
+                <th>ქვების წონა</th>
                 <th>ღირებულება</th>
-                <th>სულ ფასი</th>
+                <th>სულ თეორიული ფასი</th>
+                <th>სულ რეალური ფასი</th>
                 <th>მოგება</th>
                 <th>გადახდილი</th>
                 <th>დარჩენილი</th>
@@ -30,10 +31,11 @@
                 <td>{{ customer.location }}</td>
                 <td>{{ customer.models_count }}</td>
                 <td>{{ customer.total_model_weight }}</td>
-                <td>{{ customer.total_stone_weight }}</td>
                 <td>{{ customer.total_stone_quantity }}</td>
+                <td>{{ customer.total_stone_weight }}</td>
                 <td>{{ customer.total_cost }}</td>
                 <td>{{ customer.total_price }}</td>
+                <td>{{ customer.total_sale_price }}</td>
                 <td>{{ customer.total_profit }}</td>
                 <td>
                     {% if customer.location == 'გაყიდული' %}
