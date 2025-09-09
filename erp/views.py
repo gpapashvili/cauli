@@ -1187,7 +1187,7 @@ def lookup_table(request, table_name, action, label):
         LookupForm = lookup_table_dict[table_name][2]
         lookup_model = lookup_table_dict[table_name][1].objects.filter(stone_full_name=label).first()
     else:
-        # all simple lookup tables have same structure and created here as it can not be created in forms.py with different models
+        # all simple lookup tables have same structure. Form is created here as it can not be created in forms.py with different models
         LookupForm = modelform_factory(
             lookup_table_dict[table_name][1],
             fields=['label', 'note'],
