@@ -449,7 +449,7 @@ def lot_model_stone_add(request, lot_id, model_id, tmstmp):
 
 
 def lot_model_stone_change(request, lot_id, model_id, tmstmp, stone_full_name):
-    "update lot_model_stone details using sql query"
+    """update lot_model_stone details using sql query"""
     lot_model_stone = get_object_or_404(LotModelStones, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp, stone_full_name=stone_full_name)
     form = LotModelStonesForm(instance=lot_model_stone)
 
@@ -477,7 +477,7 @@ def lot_model_stone_change(request, lot_id, model_id, tmstmp, stone_full_name):
 
 
 def lot_model_stone_delete(request, lot_id, model_id, tmstmp, stone_full_name):
-    "delete stone after confirmation. uses same template as catalog_stone delete"
+    """delete stone after confirmation. uses same template as catalog_stone delete"""
     stone = get_object_or_404(LotModelStones, lot_id=lot_id, model_id=model_id, tmstmp=tmstmp, stone_full_name=stone_full_name)
     if request.method == 'POST':
         stone.delete()
@@ -1017,9 +1017,9 @@ def transaction_create(request, transaction_identifier='ნებისმიე
         form = AddTransactionForm(request.POST, request.FILES)
         if form.is_valid():
             # validate sign of quantity based on from or out of stock, it only works for metal and salary, other should control user
-            if (transaction_identifier in ('მეტალის_აღება', 'ხელფასი')):
+            if transaction_identifier in ('მეტალის_აღება', 'ხელფასი'):
                 value = -abs(form.cleaned_data['transaction_quantity'])
-            elif (transaction_identifier in ('მეტალის_დაბრუნება', 'მეტალის_დანაკარგი')):
+            elif transaction_identifier in ('მეტალის_დაბრუნება', 'მეტალის_დანაკარგი'):
                 value = abs(form.cleaned_data['transaction_quantity'])
             else:
                 value = form.cleaned_data['transaction_quantity']
@@ -1137,12 +1137,10 @@ def auto_salary(request, lot_id):
                 messages.success(request, 'მეტალის დანაკარგის გატარება წარმატებით შესრულდა.')
         # create transaction records for each salary type that was checked using check boxes
         for salary_type in salary_list:
-            data = {'lot_id': lot_id, 'transaction_type': 'დამუშავება', 'item': 'ფული', 'item_type': 'მომსახურება', }
-            data['transaction_quantity'] = float(salaries[salary_type] / prices[salary_type]) * -1
-            data['cost_unit'] = prices[salary_type]
-            data['transaction_quantity_unit'] = units[salary_type]
-            data['description'] = f'{descriptions[salary_type]} გადასახადი'
-            data = [data]
+            data = [{'lot_id': lot_id, 'transaction_type': 'დამუშავება', 'item': 'ფული', 'item_type': 'მომსახურება',
+                    'transaction_quantity': -abs(float(salaries[salary_type] / prices[salary_type])),
+                    'cost_unit': prices[salary_type], 'transaction_quantity_unit': units[salary_type],
+                    'description': f'{descriptions[salary_type]} გადასახადი'}]
             try:
                 insert_query('transactions', data, POSTGRESQL_ENGINE)
             except Exception as e:
@@ -1187,7 +1185,7 @@ def lookup_table(request, table_name, action, label):
         LookupForm = lookup_table_dict[table_name][2]
         lookup_model = lookup_table_dict[table_name][1].objects.filter(stone_full_name=label).first()
     else:
-        # all simple lookup tables have same structure. Form is created here as it can not be created in forms.py with different models
+        # All simple lookup tables have same structure. Form is created here as it can not be created in forms.py with different models
         LookupForm = modelform_factory(
             lookup_table_dict[table_name][1],
             fields=['label', 'note'],
