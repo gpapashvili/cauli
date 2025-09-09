@@ -33,7 +33,7 @@ This project replaces those spreadsheets with a single **web application** built
 ### 📷 Screenshots / Demo
 
 <p align="center">
-  <img src="screenshots/db_erp.png" alt="Database ERP Screenshot" width="800">
+  <img src="db_erp.png" alt="Database ERP Screenshot" width="800">
 </p>
 
 ---
